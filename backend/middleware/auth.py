@@ -1,5 +1,6 @@
 import time
 import os
+import json
 from collections import defaultdict
 from fastapi import Request, HTTPException
 from dotenv import load_dotenv
@@ -13,16 +14,24 @@ import firebase_admin
 from firebase_admin import auth as firebase_auth, credentials
 
 if not firebase_admin._apps:
-    # Build absolute path to service account JSON (relative to this file's directory)
+    cred = None
+
+    # Option 1: Local JSON file (for development)
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # backend/
     sa_path = os.path.join(base_dir, "firebase-service-account.json")
 
     if os.path.exists(sa_path):
         cred = credentials.Certificate(sa_path)
-        print(f"🔐 Firebase Admin: loaded service account from {sa_path}")
+        print(f"🔐 Firebase Admin: loaded from local file")
+
+    # Option 2: ENV variable with full JSON (for Render / production)
+    elif os.getenv("FIREBASE_SERVICE_ACCOUNT"):
+        sa_dict = json.loads(os.getenv("FIREBASE_SERVICE_ACCOUNT"))
+        cred = credentials.Certificate(sa_dict)
+        print(f"🔐 Firebase Admin: loaded from FIREBASE_SERVICE_ACCOUNT env var")
+
     else:
-        cred = None
-        print(f"⚠️ Firebase Admin: no service account found at {sa_path}, using project ID only")
+        print("⚠️ Firebase Admin: no credentials found!")
 
     firebase_admin.initialize_app(cred, {"projectId": "pdf-rag-883ef"})
     print("🔐 Firebase Admin initialized")
