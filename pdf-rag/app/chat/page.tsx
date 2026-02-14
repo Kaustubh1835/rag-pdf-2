@@ -95,7 +95,7 @@ export default function ChatPage() {
 
         try {
             const token = await user?.getIdToken();
-            const res = await fetch("http://localhost:8000/chat", {
+            const res = await fetch("https://rag-pdf-2-ew54.onrender.com/chat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
