@@ -2,10 +2,11 @@
 node_modules/
 venv/
 
-# Environment variables
+# Environment variables & secrets
 .env
 .env.local
 .env*.local
+firebase-service-account.json
 
 # Python cache
 __pycache__/

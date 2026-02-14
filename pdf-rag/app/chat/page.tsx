@@ -94,13 +94,20 @@ export default function ChatPage() {
         setSending(true);
 
         try {
+            const token = await user?.getIdToken();
             const res = await fetch("http://localhost:8000/chat", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
                 body: JSON.stringify({ query: trimmed }),
             });
 
-            if (!res.ok) throw new Error("Chat request failed");
+            if (!res.ok) {
+                const errData = await res.json().catch(() => null);
+                throw new Error(errData?.detail || "Chat request failed");
+            }
 
             const data = await res.json();
             const assistantMsg: Message = {
@@ -108,10 +115,11 @@ export default function ChatPage() {
                 content: data.answer || "No response received.",
             };
             setMessages((prev) => [...prev, assistantMsg]);
-        } catch {
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Something went wrong.";
             setMessages((prev) => [
                 ...prev,
-                { role: "assistant", content: "Something went wrong. Please try again." },
+                { role: "assistant", content: msg },
             ]);
         } finally {
             setSending(false);

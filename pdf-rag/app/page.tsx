@@ -118,15 +118,23 @@ export default function Home() {
     setAnalyseError("");
     try {
       const urls = files.map((f) => f.url).filter(Boolean);
+      const token = await user?.getIdToken();
       const res = await fetch("http://localhost:8000/analyse", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({ pdf_urls: urls }),
       });
-      if (!res.ok) throw new Error("Analysis failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.detail || data?.message || "Analysis failed");
+      }
       setAnalysed(true);
-    } catch {
-      setAnalyseError("Analysis failed. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Analysis failed. Please try again.";
+      setAnalyseError(msg);
     } finally {
       setAnalysing(false);
     }

@@ -1,8 +1,9 @@
+import os
 from dotenv import load_dotenv
 from langchain_qdrant import QdrantVectorStore
 from langchain_openai import OpenAIEmbeddings
 from openai import OpenAI
-
+from qdrant_client import QdrantClient
 load_dotenv()
 
 client = OpenAI()
@@ -18,11 +19,11 @@ def chat_with_pdf(query: str):
         model="text-embedding-3-large"
     )
 
-    vector_db = QdrantVectorStore.from_existing_collection(
-    client=qdrant_client,
-    collection_name="learning_vectors",
-    embedding=embedding_model
-)
+    vector_db = QdrantVectorStore(
+        client=qdrant_client,
+        collection_name="learning_vectors",
+        embedding=embedding_model,
+    )
 
 
     search_results = vector_db.similarity_search(query=query)

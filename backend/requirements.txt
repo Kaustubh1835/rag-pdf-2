@@ -8,3 +8,5 @@ langchain-qdrant
 qdrant-client
 openai
 pypdf
+requests
+firebase-admin
