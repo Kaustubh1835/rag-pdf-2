@@ -119,7 +119,7 @@ export default function Home() {
     try {
       const urls = files.map((f) => f.url).filter(Boolean);
       const token = await user?.getIdToken();
-      const res = await fetch("https://rag-pdf-2-ew54.onrender.com/analyse", {
+      const res = await fetch("https://pineapple-backend-rag.onrender.com/analyse", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
