@@ -7,6 +7,11 @@ load_dotenv()
 
 client = OpenAI()
 
+qdrant_client = QdrantClient(
+    url=os.getenv("QDRANT_URL"),
+    api_key=os.getenv("QDRANT_API_KEY")
+)
+
 def chat_with_pdf(query: str):
 
     embedding_model = OpenAIEmbeddings(
@@ -14,10 +19,11 @@ def chat_with_pdf(query: str):
     )
 
     vector_db = QdrantVectorStore.from_existing_collection(
-        url="http://localhost:6333",
-        collection_name="learning_vectors",
-        embedding=embedding_model
-    )
+    client=qdrant_client,
+    collection_name="learning_vectors",
+    embedding=embedding_model
+)
+
 
     search_results = vector_db.similarity_search(query=query)
 
