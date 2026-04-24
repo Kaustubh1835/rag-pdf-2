@@ -313,7 +313,6 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
           <div className="flex items-center gap-3">
             <div>
               <h1 className="text-sm font-semibold text-gray-900 leading-none">InsightPDF AI</h1>
-              <p className="text-[10px] text-gray-500 font-medium mt-1">Gpt-4o Model</p>
             </div>
           </div>
           <button 
