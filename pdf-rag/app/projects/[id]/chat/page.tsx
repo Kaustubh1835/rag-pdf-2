@@ -296,12 +296,12 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
           style={{
             position: "absolute",
             left: isSidebarMinimized ? "0px" : "auto",
-            right: isSidebarMinimized ? "auto" : "10px",
-            top: "20px",
+            right: isSidebarMinimized ? "auto" : "-16px",
+            top: "24px",
             zIndex: 1000,
             width: "32px",
             height: "32px",
-            borderRadius: isSidebarMinimized ? "0 8px 8px 0" : "8px",
+            borderRadius: isSidebarMinimized ? "0 8px 8px 0" : "50%",
             background: "white",
             border: "1px solid #e2e8f0",
             borderLeft: isSidebarMinimized ? "none" : "1px solid #e2e8f0",
@@ -309,7 +309,7 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            boxShadow: "2px 2px 10px rgba(0,0,0,0.1)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             color: "#0c4a6e"
           }}
