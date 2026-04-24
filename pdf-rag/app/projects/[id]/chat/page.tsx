@@ -67,8 +67,41 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const startResizing = () => {
+    setIsResizing(true);
+  };
+
+  const stopResizing = () => {
+    setIsResizing(false);
+  };
+
+  const resize = (e: MouseEvent) => {
+    if (isResizing) {
+      const newWidth = e.clientX;
+      if (newWidth > 150 && newWidth < 600) {
+        setSidebarWidth(newWidth);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener("mousemove", resize);
+      window.addEventListener("mouseup", stopResizing);
+    } else {
+      window.removeEventListener("mousemove", resize);
+      window.removeEventListener("mouseup", stopResizing);
+    }
+    return () => {
+      window.removeEventListener("mousemove", resize);
+      window.removeEventListener("mouseup", stopResizing);
+    };
+  }, [isResizing]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -128,8 +161,10 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [messages, sending]);
 
   const sendMessage = async () => {
     const trimmed = input.trim();
@@ -216,16 +251,39 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
   if (!user) return null;
 
   return (
-    <div style={{ height: "100vh", overflow: "hidden", display: "flex", background: "#f8fafc" }}>
+    <div 
+      style={{ 
+        height: "100vh", 
+        overflow: "hidden", 
+        display: "flex", 
+        background: "#f8fafc",
+        userSelect: isResizing ? "none" : "auto" 
+      }}
+    >
       {/* Sidebar */}
       <aside style={{
-        width: "280px",
+        width: `${sidebarWidth}px`,
         background: "white",
         borderRight: "1px solid #e2e8f0",
         display: "flex",
         flexDirection: "column",
-        flexShrink: 0
+        flexShrink: 0,
+        position: "relative"
       }}>
+        <div 
+          onMouseDown={startResizing}
+          style={{
+            position: "absolute",
+            right: "-4px",
+            top: 0,
+            bottom: 0,
+            width: "8px",
+            cursor: "col-resize",
+            zIndex: 10,
+            background: isResizing ? "#0ea5e9" : "transparent",
+            transition: "background 0.2s"
+          }} 
+        />
         <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9" }}>
           <button 
             onClick={createNewSession}
