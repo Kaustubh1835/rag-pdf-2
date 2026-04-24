@@ -271,7 +271,7 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
         flexShrink: 0,
         position: "relative",
         transition: isResizing ? "none" : "width 0.3s ease, border 0.3s ease",
-        overflow: isSidebarMinimized ? "hidden" : "visible"
+        overflow: "visible"
       }}>
         {!isSidebarMinimized && (
           <div 
@@ -295,12 +295,13 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
           onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           style={{
             position: "absolute",
-            right: isSidebarMinimized ? "-32px" : "10px",
+            left: isSidebarMinimized ? "0px" : "auto",
+            right: isSidebarMinimized ? "auto" : "10px",
             top: "20px",
-            zIndex: 100,
+            zIndex: 1000,
             width: "32px",
             height: "32px",
-            borderRadius: "0 8px 8px 0",
+            borderRadius: isSidebarMinimized ? "0 8px 8px 0" : "8px",
             background: "white",
             border: "1px solid #e2e8f0",
             borderLeft: isSidebarMinimized ? "none" : "1px solid #e2e8f0",
@@ -308,7 +309,7 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            boxShadow: "4px 2px 8px rgba(0,0,0,0.1)",
+            boxShadow: "2px 2px 10px rgba(0,0,0,0.1)",
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             color: "#0c4a6e"
           }}
@@ -320,7 +321,7 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
           )}
         </button>
-        <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9" }}>
+        <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9", opacity: isSidebarMinimized ? 0 : 1, pointerEvents: isSidebarMinimized ? "none" : "auto", transition: "opacity 0.2s" }}>
           <button 
             onClick={createNewSession}
             style={{
@@ -341,7 +342,7 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
             <span>+</span> New Chat
           </button>
         </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px", opacity: isSidebarMinimized ? 0 : 1, pointerEvents: isSidebarMinimized ? "none" : "auto", transition: "opacity 0.2s" }}>
           {sessions.map((s) => (
             <button
               key={s.id}
