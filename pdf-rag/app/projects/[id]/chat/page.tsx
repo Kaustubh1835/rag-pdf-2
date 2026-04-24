@@ -406,21 +406,21 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* Input Bar */}
-        <div style={{ borderTop: "1px solid #e2e8f0", padding: "24px 40px", flexShrink: 0, background: "white" }}>
-          <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", gap: "16px", background: "rgba(255,255,255,0.8)", padding: "12px", borderRadius: "24px", border: "1px solid #f1f5f9", boxShadow: "0 10px 40px rgba(0,0,0,0.05)" }}>
+        <div style={{ borderTop: "1px solid #e2e8f0", padding: "12px 40px", flexShrink: 0, background: "white" }}>
+          <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", gap: "12px", background: "white", padding: "8px", borderRadius: "16px", border: "1px solid #f1f5f9", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
             <input
               type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
-              placeholder="Type your question…" disabled={sending}
-              style={{ flex: 1, padding: "16px 24px", fontSize: "15px", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "16px", outline: "none", color: "#0c4a6e", backgroundColor: "white", transition: "all 0.2s ease" }}
+              placeholder="Ask anything..." disabled={sending}
+              style={{ flex: 1, padding: "10px 16px", fontSize: "14px", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "10px", outline: "none", color: "#0c4a6e", backgroundColor: "white", transition: "all 0.2s ease" }}
               onFocus={(e) => { e.target.style.borderColor = "#0ea5e9"; e.target.style.boxShadow = "0 0 0 4px rgba(14,165,233,0.05)"; }}
               onBlur={(e) => { e.target.style.borderColor = "rgba(14,165,233,0.1)"; e.target.style.boxShadow = "none"; }}
             />
             <button onClick={sendMessage} disabled={!input.trim() || sending} style={{
-              padding: "0 32px", fontSize: "15px", fontWeight: 700, color: "#fff",
+              padding: "0 20px", fontSize: "14px", fontWeight: 700, color: "#fff",
               background: !input.trim() || sending ? "#cbd5e1" : "#0c4a6e",
-              border: "none", borderRadius: "16px", cursor: !input.trim() || sending ? "not-allowed" : "pointer",
+              border: "none", borderRadius: "10px", cursor: !input.trim() || sending ? "not-allowed" : "pointer",
               transition: "all 0.2s ease", flexShrink: 0,
-              boxShadow: !input.trim() || sending ? "none" : "0 4px 12px rgba(12,74,110,0.3)",
+              boxShadow: !input.trim() || sending ? "none" : "0 2px 6px rgba(12,74,110,0.2)",
             }}
               onMouseEnter={(e) => { if (input.trim() && !sending) e.currentTarget.style.backgroundColor = "#073b5a"; }}
               onMouseLeave={(e) => { if (input.trim() && !sending) e.currentTarget.style.backgroundColor = "#0c4a6e"; }}>
