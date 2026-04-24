@@ -250,7 +250,34 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                         {new Date(doc.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <span style={{ padding: "4px 10px", background: "#ecfdf5", color: "#059669", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>Saved</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/projects/${projectId}/chat`);
+                        }}
+                        style={{
+                          background: "#0ea5e9",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "6px 12px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          transition: "all 0.2s"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#0284c7"}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#0ea5e9"}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        Chat
+                      </button>
+                      <span style={{ padding: "4px 10px", background: "#ecfdf5", color: "#059669", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>Saved</span>
+                    </div>
                   </div>
                 ))}
               </div>
