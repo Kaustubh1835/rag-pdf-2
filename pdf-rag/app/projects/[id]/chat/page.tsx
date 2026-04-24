@@ -295,19 +295,20 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
           onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           style={{
             position: "absolute",
-            right: isSidebarMinimized ? "-16px" : "10px",
+            right: isSidebarMinimized ? "-32px" : "10px",
             top: "20px",
             zIndex: 100,
             width: "32px",
             height: "32px",
-            borderRadius: "8px",
+            borderRadius: "0 8px 8px 0",
             background: "white",
             border: "1px solid #e2e8f0",
+            borderLeft: isSidebarMinimized ? "none" : "1px solid #e2e8f0",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            boxShadow: "4px 2px 8px rgba(0,0,0,0.1)",
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             color: "#0c4a6e"
           }}
