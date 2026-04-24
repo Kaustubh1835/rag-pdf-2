@@ -295,7 +295,7 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
           onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           style={{
             position: "absolute",
-            right: isSidebarMinimized ? "-40px" : "10px",
+            right: isSidebarMinimized ? "-16px" : "10px",
             top: "20px",
             zIndex: 100,
             width: "32px",
@@ -307,8 +307,8 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-            transition: "all 0.3s ease",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             color: "#0c4a6e"
           }}
           title={isSidebarMinimized ? "Expand Sidebar" : "Minimize Sidebar"}
