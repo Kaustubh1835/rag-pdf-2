@@ -1,9 +1,23 @@
 "use client";
 
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, useRef, use, useMemo } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth } from "../../../../firebase/clientApp";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Send, 
+  Plus, 
+  ArrowLeft, 
+  Bot, 
+  User as UserIcon, 
+  ChevronLeft, 
+  ChevronRight,
+  MessageSquare,
+  Sparkles,
+  Loader2
+} from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   role: "user" | "assistant";
@@ -14,48 +28,6 @@ interface ChatSession {
   id: string;
   title: string;
   createdAt: string;
-}
-
-function renderMarkdown(text: string) {
-  const lines = text.split("\n");
-  let html = "";
-  let inList = false;
-  let inOl = false;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (inList && !trimmed.startsWith("- ") && !trimmed.startsWith("• ")) { html += "</ul>"; inList = false; }
-    if (inOl && !/^\d+[\.\)]/.test(trimmed)) { html += "</ol>"; inOl = false; }
-
-    if (trimmed === "") {
-      html += "<br/>";
-    } else if (trimmed.startsWith("### ")) {
-      html += `<h4 style="font-size:13px;font-weight:600;color:#111;margin:16px 0 6px 0;text-transform:uppercase;letter-spacing:0.5px">${trimmed.slice(4)}</h4>`;
-    } else if (trimmed.startsWith("## ")) {
-      html += `<h3 style="font-size:14px;font-weight:600;color:#111;margin:16px 0 6px 0">${trimmed.slice(3)}</h3>`;
-    } else if (trimmed.startsWith("# ")) {
-      html += `<h2 style="font-size:15px;font-weight:600;color:#111;margin:16px 0 6px 0">${trimmed.slice(2)}</h2>`;
-    } else if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
-      if (!inList) { html += "<ul style='margin:4px 0;padding-left:18px'>"; inList = true; }
-      const content = trimmed.slice(2);
-      html += `<li style="margin:3px 0;line-height:1.5">${formatInline(content)}</li>`;
-    } else if (/^\d+[\.\)]/.test(trimmed)) {
-      if (!inOl) { html += "<ol style='margin:4px 0;padding-left:18px'>"; inOl = true; }
-      const content = trimmed.replace(/^\d+[\.\)]\s*/, "");
-      html += `<li style="margin:3px 0;line-height:1.5">${formatInline(content)}</li>`;
-    } else {
-      html += `<p style="margin:4px 0;line-height:1.6">${formatInline(trimmed)}</p>`;
-    }
-  }
-  if (inList) html += "</ul>";
-  if (inOl) html += "</ol>";
-  return html;
-}
-
-function formatInline(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/`(.+?)`/g, '<code style="background:#f5f5f5;padding:1px 5px;border-radius:3px;font-size:12px">$1</code>');
 }
 
 export default function ProjectChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -253,219 +225,247 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div 
-      style={{ 
-        height: "100vh", 
-        overflow: "hidden", 
-        display: "flex", 
-        background: "#f8fafc",
-        userSelect: isResizing ? "none" : "auto" 
-      }}
+      className="flex h-screen overflow-hidden bg-[#fafafa]"
+      style={{ userSelect: isResizing ? "none" : "auto" }}
     >
       {/* Sidebar */}
-      <aside style={{
-        width: isSidebarMinimized ? "0px" : `${sidebarWidth}px`,
-        background: "white",
-        borderRight: isSidebarMinimized ? "none" : "1px solid #e2e8f0",
-        display: "flex",
-        flexDirection: "column",
-        flexShrink: 0,
-        position: "relative",
-        transition: isResizing ? "none" : "width 0.3s ease, border 0.3s ease",
-        overflow: "visible"
-      }}>
+      <motion.aside 
+        initial={false}
+        animate={{ width: isSidebarMinimized ? 0 : sidebarWidth }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        style={{
+          background: "white",
+          borderRight: isSidebarMinimized ? "none" : "1px solid #eee",
+          display: "flex",
+          flexDirection: "column",
+          flexShrink: 0,
+          position: "relative",
+          zIndex: 40,
+        }}
+      >
         {!isSidebarMinimized && (
           <div 
             onMouseDown={startResizing}
-            style={{
-              position: "absolute",
-              right: "-4px",
-              top: 0,
-              bottom: 0,
-              width: "8px",
-              cursor: "col-resize",
-              zIndex: 10,
-              background: isResizing ? "#0ea5e9" : "transparent",
-              transition: "background 0.2s"
-            }} 
+            className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize z-50 hover:bg-sky-500/20 transition-colors"
           />
         )}
         
         {/* Toggle Button */}
         <button
           onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+          className="absolute z-[60] flex items-center justify-center bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all duration-200 text-gray-500 hover:text-sky-600"
           style={{
-            position: "absolute",
-            left: isSidebarMinimized ? "0px" : "auto",
-            right: isSidebarMinimized ? "auto" : "-16px",
+            width: "28px",
+            height: "28px",
             top: "24px",
-            zIndex: 1000,
-            width: "32px",
-            height: "32px",
-            borderRadius: isSidebarMinimized ? "0 8px 8px 0" : "50%",
-            background: "white",
-            border: "1px solid #e2e8f0",
-            borderLeft: isSidebarMinimized ? "none" : "1px solid #e2e8f0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            color: "#0c4a6e"
+            right: isSidebarMinimized ? "-14px" : "-14px",
+            transform: isSidebarMinimized ? "none" : "none"
           }}
           title={isSidebarMinimized ? "Expand Sidebar" : "Minimize Sidebar"}
         >
-          {isSidebarMinimized ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
-          )}
+          {isSidebarMinimized ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
-        <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9", opacity: isSidebarMinimized ? 0 : 1, pointerEvents: isSidebarMinimized ? "none" : "auto", transition: "opacity 0.2s" }}>
-          <button 
-            onClick={createNewSession}
-            style={{
-              width: "100%",
-              padding: "12px",
-              background: "#0c4a6e",
-              color: "white",
-              border: "none",
-              borderRadius: "10px",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px"
-            }}
-          >
-            <span>+</span> New Chat
-          </button>
-        </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "12px", opacity: isSidebarMinimized ? 0 : 1, pointerEvents: isSidebarMinimized ? "none" : "auto", transition: "opacity 0.2s" }}>
-          {sessions.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => selectSession(s.id)}
-              style={{
-                width: "100%",
-                padding: "12px",
-                textAlign: "left",
-                background: currentSessionId === s.id ? "#f0f9ff" : "transparent",
-                border: "none",
-                borderRadius: "8px",
-                color: currentSessionId === s.id ? "#0c4a6e" : "#475569",
-                fontSize: "14px",
-                fontWeight: currentSessionId === s.id ? 600 : 500,
-                cursor: "pointer",
-                marginBottom: "4px",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis"
-              }}
+
+        <AnimatePresence>
+          {!isSidebarMinimized && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col h-full overflow-hidden"
             >
-              {s.title}
-            </button>
-          ))}
-        </div>
-      </aside>
+              <div className="p-4 border-bottom border-gray-50">
+                <button 
+                  onClick={createNewSession}
+                  className="w-full py-2.5 px-4 bg-gray-900 hover:bg-black text-white rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm active:scale-95"
+                >
+                  <Plus size={16} /> New Chat
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-2 space-y-1 py-2 custom-scrollbar">
+                {sessions.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => selectSession(s.id)}
+                    className={`w-full p-3 text-left rounded-xl transition-all duration-200 group relative flex flex-col gap-0.5 ${
+                      currentSessionId === s.id 
+                        ? "bg-sky-50 text-sky-900 border-sky-100" 
+                        : "text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-100"
+                    } border`}
+                  >
+                    <span className="font-medium text-[13px] truncate pr-4">{s.title}</span>
+                    <span className="text-[10px] text-gray-400 group-hover:text-sky-500/60 transition-colors">
+                      {new Date(s.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.aside>
 
       {/* Main Chat Area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <main className="flex-1 flex flex-col min-w-0 bg-[#ffffff] relative">
         {/* Header */}
-        <header style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "16px 40px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(24px)",
-          borderBottom: "1px solid rgba(226,232,240,0.8)", flexShrink: 0, zIndex: 50,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ width: "32px", height: "32px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "16px" }}>I</div>
-            <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#0c4a6e", margin: 0, letterSpacing: "-0.5px" }}>InsightPDF Chat</h1>
+        <header className="h-14 flex items-center justify-between px-6 border-b border-gray-50 bg-white/80 backdrop-blur-md sticky top-0 z-30">
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-sm font-semibold text-gray-900 leading-none">InsightPDF AI</h1>
+              <p className="text-[10px] text-gray-500 font-medium mt-1">Gpt-4o Model</p>
+            </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <button onClick={() => router.push(`/projects/${projectId}`)} style={{ fontSize: "14px", fontWeight: 600, color: "#475569", background: "white", padding: "10px 20px", borderRadius: "10px", border: "1px solid #e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", transition: "all 0.2s ease" }}>
-              ← Back to Project
-            </button>
-          </div>
+          <button 
+            onClick={() => router.push(`/projects/${projectId}`)} 
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all"
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
         </header>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "48px 24px" }}>
-          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+        <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">
+          <div className="max-w-[720px] mx-auto py-10 space-y-8">
             {messages.length === 0 && !sending && (
-              <div style={{ textAlign: "center", padding: "100px 0" }}>
-                <div style={{ width: "64px", height: "64px", background: "#f0f9ff", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "32px" }}>🤖</div>
-                <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#0c4a6e", marginBottom: "12px" }}>Start the conversation</h3>
-                <p style={{ fontSize: "16px", color: "#64748b", maxWidth: "400px", margin: "0 auto" }}>
-                  Select a chat from the sidebar or start a new one to begin.
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center min-h-[50vh] text-center"
+              >
+                <div className="w-16 h-16 bg-gradient-to-tr from-sky-50 to-white rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-sky-50">
+                  <Bot size={32} className="text-sky-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">How can I help you today?</h3>
+                <p className="text-sm text-gray-500 max-w-[320px]">
+                  Ask questions about your documents, summarize content, or extract key insights.
                 </p>
-              </div>
+              </motion.div>
             )}
 
-            {messages.map((msg, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", alignItems: "flex-start", gap: "16px", marginBottom: "24px" }}>
-                {msg.role === "assistant" && (
-                  <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px", boxShadow: "0 4px 10px rgba(14,165,233,0.2)" }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="9" cy="16" r="1" /><circle cx="15" cy="16" r="1" /><path d="M12 2v4" /><path d="M8 7h8" /></svg>
+            <AnimatePresence initial={false}>
+              {messages.map((msg, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 border ${
+                    msg.role === "assistant" 
+                      ? "bg-white border-sky-100 text-sky-600" 
+                      : "bg-gray-900 border-gray-900 text-white"
+                  }`}>
+                    {msg.role === "assistant" ? <Bot size={16} /> : <UserIcon size={16} />}
                   </div>
-                )}
-                <div style={{
-                  maxWidth: "75%", padding: "16px", borderRadius: "16px", fontSize: "15px", lineHeight: "1.6",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.05)", border: msg.role === "assistant" ? "1px solid rgba(14,165,233,0.15)" : "none",
-                  ...(msg.role === "user"
-                    ? { backgroundColor: "#0c4a6e", color: "#ffffff", borderTopRightRadius: "4px" }
-                    : { backgroundColor: "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)", color: "#1e293b", borderTopLeftRadius: "4px" }),
-                }}>
-                  {msg.role === "assistant" ? (
-                    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
-                  ) : msg.content}
-                </div>
-                {msg.role === "user" && (
-                  <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#0c4a6e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px", boxShadow: "0 2px 8px rgba(12,74,110,0.3)" }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                  
+                  <div className={`flex flex-col gap-1.5 max-w-[85%] ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                    <div className={`px-4 py-2.5 rounded-2xl text-[14.5px] leading-relaxed shadow-sm ${
+                      msg.role === "user"
+                        ? "bg-sky-600 text-white rounded-tr-none"
+                        : "bg-gray-50 text-gray-800 rounded-tl-none border border-gray-100/50"
+                    }`}>
+                      {msg.role === "assistant" ? (
+                        <div className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0.5">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-400 px-1 font-medium">
+                      {msg.role === "assistant" ? "AI Assistant" : "You"}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
             {sending && (
-              <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-start", gap: "10px", marginBottom: "16px" }}>
-                <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="9" cy="16" r="1" /><circle cx="15" cy="16" r="1" /><path d="M12 2v4" /><path d="M8 7h8" /></svg>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex gap-4"
+              >
+                <div className="w-8 h-8 rounded-full bg-white border border-sky-100 flex items-center justify-center text-sky-600 shadow-sm animate-pulse">
+                  <Bot size={16} />
                 </div>
-                <div style={{ padding: "16px", borderRadius: "16px", borderTopLeftRadius: "4px", backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(14,165,233,0.15)", fontSize: "15px", color: "#64748b", backdropFilter: "blur(10px)" }}>
-                  Thinking…
+                <div className="bg-gray-50 border border-gray-100/50 px-4 py-2.5 rounded-2xl rounded-tl-none">
+                  <div className="flex gap-1">
+                    <motion.span 
+                      animate={{ opacity: [0.4, 1, 0.4] }} 
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="w-1.5 h-1.5 bg-sky-400 rounded-full"
+                    />
+                    <motion.span 
+                      animate={{ opacity: [0.4, 1, 0.4] }} 
+                      transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+                      className="w-1.5 h-1.5 bg-sky-400 rounded-full"
+                    />
+                    <motion.span 
+                      animate={{ opacity: [0.4, 1, 0.4] }} 
+                      transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+                      className="w-1.5 h-1.5 bg-sky-400 rounded-full"
+                    />
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             )}
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className="h-4" />
           </div>
         </div>
 
         {/* Input Bar */}
-        <div style={{ borderTop: "1px solid #e2e8f0", padding: "12px 40px", flexShrink: 0, background: "white" }}>
-          <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", gap: "12px", background: "white", padding: "8px", borderRadius: "16px", border: "1px solid #f1f5f9", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-            <input
-              type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
-              placeholder="Ask anything..." disabled={sending}
-              style={{ flex: 1, padding: "10px 16px", fontSize: "14px", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "10px", outline: "none", color: "#0c4a6e", backgroundColor: "white", transition: "all 0.2s ease" }}
-              onFocus={(e) => { e.target.style.borderColor = "#0ea5e9"; e.target.style.boxShadow = "0 0 0 4px rgba(14,165,233,0.05)"; }}
-              onBlur={(e) => { e.target.style.borderColor = "rgba(14,165,233,0.1)"; e.target.style.boxShadow = "none"; }}
+        <div className="p-4 bg-white border-t border-gray-50">
+          <div className="max-w-[720px] mx-auto relative group">
+            <textarea
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Message InsightPDF..."
+              disabled={sending}
+              className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-50/50 transition-all duration-200 text-sm resize-none custom-scrollbar min-h-[46px] max-h-[120px]"
+              style={{ overflowY: input.split('\n').length > 5 ? 'auto' : 'hidden' }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
+              }}
             />
-            <button onClick={sendMessage} disabled={!input.trim() || sending} style={{
-              padding: "0 20px", fontSize: "14px", fontWeight: 700, color: "#fff",
-              background: !input.trim() || sending ? "#cbd5e1" : "#0c4a6e",
-              border: "none", borderRadius: "10px", cursor: !input.trim() || sending ? "not-allowed" : "pointer",
-              transition: "all 0.2s ease", flexShrink: 0,
-              boxShadow: !input.trim() || sending ? "none" : "0 2px 6px rgba(12,74,110,0.2)",
-            }}
-              onMouseEnter={(e) => { if (input.trim() && !sending) e.currentTarget.style.backgroundColor = "#073b5a"; }}
-              onMouseLeave={(e) => { if (input.trim() && !sending) e.currentTarget.style.backgroundColor = "#0c4a6e"; }}>
-              {sending ? "..." : "Send"}
+            <button 
+              onClick={sendMessage} 
+              disabled={!input.trim() || sending} 
+              className={`absolute right-2 top-[5px] p-2 rounded-xl transition-all duration-200 ${
+                !input.trim() || sending 
+                  ? "text-gray-300" 
+                  : "text-white bg-sky-600 hover:bg-sky-700 shadow-sm active:scale-95"
+              }`}
+            >
+              {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </button>
+            <p className="text-[10px] text-gray-400 mt-2 text-center font-medium">
+              AI can make mistakes. Verify important information.
+            </p>
           </div>
         </div>
-      </div>
+      </main>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e5e7eb;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #d1d5db;
+        }
+      `}</style>
     </div>
   );
 }
