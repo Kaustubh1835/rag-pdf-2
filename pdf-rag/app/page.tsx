@@ -234,7 +234,6 @@ export default function Dashboard() {
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                      <div style={{ width: "48px", height: "48px", background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>📄</div>
                       <div>
                         <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#0c4a6e", margin: 0 }}>{project.name}</h3>
                         <p style={{ fontSize: "13px", color: "#94a3b8", margin: "4px 0 0 0" }}>
@@ -261,10 +260,6 @@ export default function Dashboard() {
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Click to open →</span>
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      <span style={{ padding: "4px 10px", background: "#f0f9ff", color: "#0ea5e9", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>Chat</span>
-                      <span style={{ padding: "4px 10px", background: "#ecfdf5", color: "#059669", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>Summarize</span>
-                    </div>
                   </div>
                 </div>
               ))}
