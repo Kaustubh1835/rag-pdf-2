@@ -1,27 +1,25 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
-import { auth, storage } from "../firebase/clientApp";
+import { auth } from "../firebase/clientApp";
 
-interface UploadedFile {
-  file: File;
-  progress: number;
-  url: string | null;
-  status: "pending" | "uploading" | "done" | "error";
+interface Project {
+  id: string;
+  name: string;
+  userId: string;
+  createdAt: string;
 }
 
-export default function Home() {
+export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [files, setFiles] = useState<UploadedFile[]>([]);
-  const [analysing, setAnalysing] = useState(false);
-  const [analysed, setAnalysed] = useState(false);
-  const [analyseError, setAnalyseError] = useState("");
-  const [dragOver, setDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [creating, setCreating] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -33,110 +31,53 @@ export default function Home() {
     return () => unsubscribe();
   }, [router]);
 
-  const addFiles = (newFiles: FileList | File[]) => {
-    const pdfFiles = Array.from(newFiles).filter(
-      (f) => f.type === "application/pdf"
-    );
-    if (pdfFiles.length === 0) return;
+  // Fetch projects once user is available
+  useEffect(() => {
+    if (!user) return;
+    fetchProjects();
+  }, [user]);
 
-    const totalAfter = files.length + pdfFiles.length;
-    if (totalAfter > 3) {
-      alert("You can upload a maximum of 3 PDFs.");
-      return;
-    }
-
-    const newEntries: UploadedFile[] = pdfFiles.map((f) => ({
-      file: f,
-      progress: 0,
-      url: null,
-      status: "pending" as const,
-    }));
-
-    setFiles((prev) => [...prev, ...newEntries]);
-    setAnalysed(false);
-    setAnalyseError("");
-
-    // Upload each file
-    newEntries.forEach((entry, idx) => {
-      const startIdx = files.length + idx;
-      const storageRef = ref(
-        storage,
-        `pdfs/${user?.uid}/${Date.now()}_${entry.file.name}`
-      );
-      const uploadTask = uploadBytesResumable(storageRef, entry.file);
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = Math.round(
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          );
-          setFiles((prev) =>
-            prev.map((f, i) =>
-              i === startIdx ? { ...f, progress, status: "uploading" } : f
-            )
-          );
-        },
-        (error) => {
-          console.error("Firebase Storage upload error:", error);
-          alert(`Upload failed: ${error.message}\n\nMake sure Firebase Storage is enabled and rules allow authenticated uploads.`);
-          setFiles((prev) =>
-            prev.map((f, i) =>
-              i === startIdx ? { ...f, status: "error" } : f
-            )
-          );
-        },
-        async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          setFiles((prev) =>
-            prev.map((f, i) =>
-              i === startIdx ? { ...f, url, progress: 100, status: "done" } : f
-            )
-          );
-        }
-      );
-    });
-  };
-
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-    setAnalysed(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    addFiles(e.dataTransfer.files);
-  };
-
-  const allUploaded =
-    files.length > 0 && files.every((f) => f.status === "done");
-
-  const handleAnalyse = async () => {
-    if (!allUploaded) return;
-    setAnalysing(true);
-    setAnalyseError("");
+  const fetchProjects = async () => {
+    setLoadingProjects(true);
     try {
-      const urls = files.map((f) => f.url).filter(Boolean);
       const token = await user?.getIdToken();
-      const res = await fetch("https://pineapple-backend-rag.onrender.com/analyse", {
+      const res = await fetch("/api/projects", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch projects:", err);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim() || creating) return;
+    setCreating(true);
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch("/api/projects", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ pdf_urls: urls }),
+        body: JSON.stringify({ name: newProjectName.trim() }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.detail || data?.message || "Analysis failed");
+      if (res.ok) {
+        const project = await res.json();
+        setProjects((prev) => [project, ...prev]);
+        setNewProjectName("");
+        setShowModal(false);
       }
-      setAnalysed(true);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Analysis failed. Please try again.";
-      setAnalyseError(msg);
+    } catch (err) {
+      console.error("Failed to create project:", err);
     } finally {
-      setAnalysing(false);
+      setCreating(false);
     }
   };
 
@@ -147,16 +88,10 @@ export default function Home() {
 
   if (authLoading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#ffffff",
-        }}
-      >
-        <p style={{ color: "#999", fontSize: "14px" }}>Loading…</p>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ padding: "24px", background: "rgba(255,255,255,0.8)", borderRadius: "12px", boxShadow: "0 8px 32px rgba(0,0,0,0.05)", backdropFilter: "blur(10px)" }}>
+          <p style={{ color: "#0c4a6e", fontSize: "15px", fontWeight: 500 }}>Loading…</p>
+        </div>
       </div>
     );
   }
@@ -164,322 +99,280 @@ export default function Home() {
   if (!user) return null;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#ffffff",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 32px",
-          borderBottom: "1px solid #eee",
-        }}
-      >
-        <h1 style={{ fontSize: "18px", fontWeight: 600, color: "#111", margin: 0 }}>
-          Pineapple
-        </h1>
-        <button
-          onClick={handleSignOut}
-          style={{
-            fontSize: "13px",
-            fontWeight: 500,
-            color: "#fff",
-            backgroundColor: "#111",
-            border: "none",
-            borderRadius: "6px",
-            padding: "8px 16px",
-            cursor: "pointer",
-            transition: "opacity 0.15s ease",
-          }}
-        >
-          Sign out
-        </button>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* ───── Navbar ───── */}
+      <header style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "16px 40px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(24px)",
+        borderBottom: "1px solid rgba(226,232,240,0.8)", boxShadow: "0 4px 20px -2px rgba(0,0,0,0.05)",
+        position: "sticky", top: 0, zIndex: 50,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ width: "36px", height: "36px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "18px", boxShadow: "0 4px 10px rgba(14,165,233,0.3)" }}>I</div>
+            <h1 style={{ fontSize: "22px", fontWeight: 800, color: "#0c4a6e", margin: 0, letterSpacing: "-0.5px" }}>InsightPDF</h1>
+          </div>
+          <nav style={{ display: "flex", gap: "28px", alignItems: "center" }}>
+            <a href="#" style={{ fontSize: "15px", fontWeight: 600, color: "#0ea5e9", textDecoration: "none" }}>Dashboard</a>
+            <a href="#" style={{ fontSize: "15px", fontWeight: 500, color: "#64748b", textDecoration: "none", transition: "color 0.2s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#0f172a")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#64748b")}>Settings</a>
+          </nav>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "6px 16px", background: "white", borderRadius: "30px", border: "1px solid rgba(226,232,240,0.8)", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#e0f2fe", color: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>
+              {(user?.displayName || user?.email || "U")[0].toUpperCase()}
+            </div>
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "#334155" }}>
+              {user?.displayName || user?.email?.split("@")[0] || "User"}
+            </span>
+          </div>
+          <button onClick={handleSignOut} style={{ fontSize: "14px", fontWeight: 600, color: "#64748b", background: "transparent", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 16px", cursor: "pointer", transition: "all 0.2s ease" }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; e.currentTarget.style.color = "#0f172a"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#64748b"; }}>
+            Sign out
+          </button>
+        </div>
       </header>
 
-      {/* Main */}
-      <main
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "48px 24px",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "520px",
-          }}
-        >
-          {/* Title */}
-          <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <h2
+      {/* ───── Main Content ───── */}
+      <main style={{ flex: 1, padding: "60px 40px" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          {/* Header Row */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "48px" }}>
+            <div>
+              <h2 style={{ fontSize: "36px", fontWeight: 800, color: "#0c4a6e", margin: "0 0 8px 0", letterSpacing: "-0.5px" }}>
+                Your Projects
+              </h2>
+              <p style={{ fontSize: "16px", color: "#64748b", margin: 0 }}>
+                Create a project, upload PDFs, and start chatting with your documents.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowModal(true)}
               style={{
-                fontSize: "28px",
-                fontWeight: 600,
-                color: "#111",
-                margin: "0 0 8px 0",
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "12px 28px", fontSize: "15px", fontWeight: 700,
+                color: "white", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)",
+                border: "none", borderRadius: "14px", cursor: "pointer",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                boxShadow: "0 6px 20px rgba(14,165,233,0.25)",
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 28px rgba(14,165,233,0.35)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(14,165,233,0.25)"; }}
             >
-              Chat with your PDFs
-            </h2>
-            <p style={{ fontSize: "15px", color: "#888", margin: 0 }}>
-              Upload up to 3 PDF files, analyse them, and start chatting.
-            </p>
+              <span style={{ fontSize: "20px", lineHeight: 1 }}>+</span> New Project
+            </button>
           </div>
 
-          {/* Info Cards */}
-          <div style={{ display: "flex", gap: "12px", marginBottom: "32px" }}>
-            <div className="info-card" style={{ flex: 1, padding: "16px", border: "1px solid #eee", borderRadius: "6px" }}>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "#111", margin: "0 0 4px 0" }}>1. Upload</p>
-              <p style={{ fontSize: "12px", color: "#888", margin: 0, lineHeight: "1.5" }}>Add up to 3 PDF files to get started.</p>
+          {/* Projects Grid */}
+          {loadingProjects ? (
+            <div style={{ textAlign: "center", padding: "80px 0" }}>
+              <div style={{ width: "40px", height: "40px", border: "4px solid rgba(14,165,233,0.1)", borderTopColor: "#0ea5e9", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 20px" }} />
+              <p style={{ color: "#64748b" }}>Loading projects…</p>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
-            <div className="info-card" style={{ flex: 1, padding: "16px", border: "1px solid #eee", borderRadius: "6px" }}>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "#111", margin: "0 0 4px 0" }}>2. Analyse</p>
-              <p style={{ fontSize: "12px", color: "#888", margin: 0, lineHeight: "1.5" }}>We index your documents for smart search.</p>
+          ) : projects.length === 0 ? (
+            <div style={{
+              textAlign: "center", padding: "100px 40px",
+              background: "rgba(255,255,255,0.6)", borderRadius: "32px",
+              border: "2px dashed rgba(14,165,233,0.2)",
+            }}>
+              <div style={{ width: "80px", height: "80px", background: "#f0f9ff", borderRadius: "24px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "40px" }}>📁</div>
+              <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#0c4a6e", marginBottom: "12px" }}>No projects yet</h3>
+              <p style={{ fontSize: "16px", color: "#64748b", maxWidth: "400px", margin: "0 auto 32px" }}>
+                Create your first project to start uploading PDFs and chatting with them using AI.
+              </p>
+              <button
+                onClick={() => setShowModal(true)}
+                style={{
+                  padding: "14px 32px", fontSize: "15px", fontWeight: 700,
+                  color: "white", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)",
+                  border: "none", borderRadius: "14px", cursor: "pointer",
+                  boxShadow: "0 6px 20px rgba(14,165,233,0.25)",
+                }}
+              >
+                + Create First Project
+              </button>
             </div>
-            <div className="info-card" style={{ flex: 1, padding: "16px", border: "1px solid #eee", borderRadius: "6px" }}>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "#111", margin: "0 0 4px 0" }}>3. Chat</p>
-              <p style={{ fontSize: "12px", color: "#888", margin: 0, lineHeight: "1.5" }}>Ask questions and get answers from your PDFs.</p>
-            </div>
-          </div>
-
-          {/* Upload Zone */}
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => files.length < 3 && fileInputRef.current?.click()}
-            style={{
-              border: `2px dashed ${dragOver ? "#111" : "#d4d4d4"}`,
-              borderRadius: "8px",
-              padding: "40px 24px",
-              textAlign: "center",
-              cursor: files.length >= 3 ? "default" : "pointer",
-              transition: "border-color 0.15s ease",
-              marginBottom: "24px",
-              backgroundColor: "#fafafa",
-            }}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              multiple
-              style={{ display: "none" }}
-              onChange={(e) => e.target.files && addFiles(e.target.files)}
-            />
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#bbb"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ margin: "0 auto 12px" }}
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            <p style={{ fontSize: "14px", color: "#666", margin: "0 0 4px 0" }}>
-              {files.length >= 3
-                ? "Maximum 3 files reached"
-                : "Drop PDFs here or click to browse"}
-            </p>
-            <p style={{ fontSize: "12px", color: "#aaa", margin: 0 }}>
-              PDF files only · Max 3 files
-            </p>
-          </div>
-
-          {/* File List */}
-          {files.length > 0 && (
-            <div style={{ marginBottom: "24px" }}>
-              {files.map((f, i) => (
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" }}>
+              {projects.map((project) => (
                 <div
-                  key={i}
+                  key={project.id}
+                  onClick={() => router.push(`/projects/${project.id}`)}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "12px 16px",
-                    borderRadius: "6px",
-                    border: "1px solid #eee",
-                    marginBottom: "8px",
-                    backgroundColor: "#fff",
+                    padding: "32px", background: "rgba(255,255,255,0.85)",
+                    backdropFilter: "blur(20px)", borderRadius: "24px",
+                    border: "1px solid rgba(255,255,255,0.6)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.04)",
+                    cursor: "pointer", transition: "all 0.25s ease",
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(14,165,233,0.12)"; e.currentTarget.style.borderColor = "rgba(14,165,233,0.3)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)"; }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 500,
-                        color: "#333",
-                        margin: 0,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {f.file.name}
-                    </p>
-                    <p style={{ fontSize: "11px", color: "#aaa", margin: "2px 0 0 0" }}>
-                      {f.status === "uploading"
-                        ? `Uploading… ${f.progress}%`
-                        : f.status === "done"
-                          ? "Uploaded"
-                          : f.status === "error"
-                            ? "Upload failed"
-                            : "Pending"}
-                    </p>
-                  </div>
-
-                  {/* Progress bar */}
-                  {f.status === "uploading" && (
-                    <div
-                      style={{
-                        width: "60px",
-                        height: "3px",
-                        backgroundColor: "#eee",
-                        borderRadius: "2px",
-                        marginRight: "12px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${f.progress}%`,
-                          height: "100%",
-                          backgroundColor: "#111",
-                          transition: "width 0.2s ease",
-                        }}
-                      />
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
+                    <div style={{ width: "48px", height: "48px", background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>📄</div>
+                    <div>
+                      <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#0c4a6e", margin: 0 }}>{project.name}</h3>
+                      <p style={{ fontSize: "13px", color: "#94a3b8", margin: "4px 0 0 0" }}>
+                        {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Click to open →</span>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <span style={{ padding: "4px 10px", background: "#f0f9ff", color: "#0ea5e9", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>Chat</span>
+                      <span style={{ padding: "4px 10px", background: "#ecfdf5", color: "#059669", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>Summarize</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
 
-                  {/* Check mark for done */}
-                  {f.status === "done" && (
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#22c55e"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ marginRight: "12px", flexShrink: 0 }}
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
+              {/* Add New Project Card */}
+              <div
+                onClick={() => setShowModal(true)}
+                style={{
+                  padding: "32px", background: "rgba(255,255,255,0.4)",
+                  borderRadius: "24px", border: "2px dashed rgba(14,165,233,0.25)",
+                  cursor: "pointer", transition: "all 0.25s ease",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                  minHeight: "180px",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(240,249,255,0.8)"; e.currentTarget.style.borderColor = "#0ea5e9"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.4)"; e.currentTarget.style.borderColor = "rgba(14,165,233,0.25)"; }}
+              >
+                <div style={{ width: "48px", height: "48px", background: "#e0f2fe", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
+                  <span style={{ fontSize: "28px", color: "#0ea5e9", lineHeight: 1 }}>+</span>
+                </div>
+                <p style={{ fontSize: "15px", fontWeight: 600, color: "#0ea5e9", margin: 0 }}>New Project</p>
+              </div>
+            </div>
+          )}
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile(i);
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "#ccc",
-                      fontSize: "18px",
-                      lineHeight: 1,
-                      padding: "0 0 0 4px",
-                      flexShrink: 0,
-                    }}
-                  >
-                    ×
-                  </button>
+          {/* ───── Feature Sections ───── */}
+          <div style={{ width: "100%", marginTop: "120px" }}>
+            <div style={{ textAlign: "center", marginBottom: "64px" }}>
+              <h2 style={{ fontSize: "32px", fontWeight: 800, color: "#0c4a6e", marginBottom: "16px" }}>Powerful features for everyone</h2>
+              <p style={{ fontSize: "18px", color: "#64748b" }}>Everything you need to master your PDF library.</p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "100px" }}>
+              {[
+                { icon: "🔍", title: "Deep Semantic Search", desc: "Our AI understands context and meaning, not just keywords." },
+                { icon: "🔒", title: "Secure & Private", desc: "Your documents are encrypted and only accessible to you." },
+                { icon: "📑", title: "Multi-file Analysis", desc: "Analyze up to 3 PDFs simultaneously per project." },
+                { icon: "🌐", title: "Anywhere Access", desc: "Your indexed documents are stored in the cloud." },
+                { icon: "⚡", title: "Instant Extraction", desc: "Get precise answers from complex tables and text in seconds." },
+                { icon: "📊", title: "Summary Modes", desc: "Short, Detailed, Key Points, and Exam Mode summaries." },
+              ].map((f, i) => (
+                <div key={i} style={{ padding: "32px", background: "rgba(255,255,255,0.85)", borderRadius: "24px", border: "1px solid rgba(14,165,233,0.08)", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
+                  <div style={{ fontSize: "32px", marginBottom: "16px" }}>{f.icon}</div>
+                  <h4 style={{ fontSize: "17px", fontWeight: 700, color: "#0c4a6e", marginBottom: "8px" }}>{f.title}</h4>
+                  <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
                 </div>
               ))}
             </div>
-          )}
 
-          {/* Analyse Button */}
-          {files.length > 0 && !analysed && (
-            <button
-              onClick={handleAnalyse}
-              disabled={!allUploaded || analysing}
-              style={{
-                width: "100%",
-                padding: "14px 20px",
-                fontSize: "14px",
-                fontWeight: 500,
-                color: "#fff",
-                backgroundColor: !allUploaded || analysing ? "#ccc" : "#111",
-                border: "none",
-                borderRadius: "6px",
-                cursor: !allUploaded || analysing ? "not-allowed" : "pointer",
-                transition: "background-color 0.15s ease",
-                marginBottom: "12px",
-              }}
-            >
-              {analysing ? "Analysing…" : "Analyse PDFs"}
-            </button>
-          )}
-
-          {analyseError && (
-            <p
-              style={{
-                fontSize: "13px",
-                color: "#dc2626",
-                textAlign: "center",
-                margin: "0 0 12px 0",
-              }}
-            >
-              {analyseError}
-            </p>
-          )}
-
-          {/* Success + Start Chat */}
-          {analysed && (
-            <div style={{ textAlign: "center" }}>
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: "#22c55e",
-                  fontWeight: 500,
-                  margin: "0 0 16px 0",
-                }}
-              >
-                ✓ PDFs analysed successfully
-              </p>
-              <button
-                onClick={() => router.push("/chat")}
-                style={{
-                  width: "100%",
-                  padding: "14px 20px",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  color: "#fff",
-                  backgroundColor: "#111",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  transition: "opacity 0.15s ease",
-                }}
-              >
-                Start Chat →
-              </button>
+            {/* Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "80px", background: "white", padding: "48px", borderRadius: "32px", border: "1px solid rgba(14,165,233,0.1)", textAlign: "center" }}>
+              <div>
+                <p style={{ fontSize: "40px", fontWeight: 800, color: "#0ea5e9", margin: "0 0 8px 0" }}>99%</p>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>Accuracy</p>
+              </div>
+              <div>
+                <p style={{ fontSize: "40px", fontWeight: 800, color: "#0ea5e9", margin: "0 0 8px 0" }}>2s</p>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>Avg. Response</p>
+              </div>
+              <div>
+                <p style={{ fontSize: "40px", fontWeight: 800, color: "#0ea5e9", margin: "0 0 8px 0" }}>1k+</p>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>PDFs Indexed</p>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </main>
+
+      {/* ───── Create Project Modal ───── */}
+      {showModal && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+            backdropFilter: "blur(8px)", display: "flex", alignItems: "center",
+            justifyContent: "center", zIndex: 100, animation: "fadeIn 0.2s ease",
+          }}
+          onClick={() => { setShowModal(false); setNewProjectName(""); }}
+        >
+          <div
+            style={{
+              width: "100%", maxWidth: "480px", padding: "48px",
+              background: "rgba(255,255,255,0.95)", borderRadius: "28px",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.15)",
+              border: "1px solid rgba(255,255,255,0.8)",
+              animation: "slideUp 0.25s ease",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+              <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#0c4a6e", margin: 0 }}>Create New Project</h3>
+              <button
+                onClick={() => { setShowModal(false); setNewProjectName(""); }}
+                style={{ background: "none", border: "none", fontSize: "24px", color: "#94a3b8", cursor: "pointer", padding: "4px" }}
+              >×</button>
+            </div>
+            <p style={{ color: "#64748b", fontSize: "15px", margin: "0 0 24px 0", lineHeight: 1.6 }}>
+              Give your project a name. You can upload PDFs and chat with them inside.
+            </p>
+            <input
+              type="text"
+              placeholder="e.g. Research Papers, Course Notes…"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreateProject(); }}
+              autoFocus
+              style={{
+                width: "100%", padding: "16px 20px", fontSize: "15px",
+                border: "1px solid #e2e8f0", borderRadius: "14px",
+                outline: "none", color: "#0c4a6e", backgroundColor: "#f8fafc",
+                transition: "border-color 0.2s, box-shadow 0.2s",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => { e.target.style.borderColor = "#0ea5e9"; e.target.style.boxShadow = "0 0 0 4px rgba(14,165,233,0.08)"; }}
+              onBlur={(e) => { e.target.style.borderColor = "#e2e8f0"; e.target.style.boxShadow = "none"; }}
+            />
+            <div style={{ display: "flex", gap: "12px", marginTop: "28px" }}>
+              <button
+                onClick={() => { setShowModal(false); setNewProjectName(""); }}
+                style={{
+                  flex: 1, padding: "14px", fontSize: "15px", fontWeight: 600,
+                  color: "#64748b", background: "white", border: "1px solid #e2e8f0",
+                  borderRadius: "12px", cursor: "pointer", transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProject}
+                disabled={!newProjectName.trim() || creating}
+                style={{
+                  flex: 1, padding: "14px", fontSize: "15px", fontWeight: 700,
+                  color: "white",
+                  background: !newProjectName.trim() || creating ? "#cbd5e1" : "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)",
+                  border: "none", borderRadius: "12px",
+                  cursor: !newProjectName.trim() || creating ? "not-allowed" : "pointer",
+                  boxShadow: !newProjectName.trim() || creating ? "none" : "0 4px 14px rgba(14,165,233,0.3)",
+                  transition: "all 0.2s",
+                }}
+              >
+                {creating ? "Creating…" : "Create Project"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

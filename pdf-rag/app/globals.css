@@ -1,16 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #111111;
-}
-
-.info-card {
-  transition: box-shadow 0.2s ease;
-}
-
-.info-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --background: #dbedf7;
+  --foreground: #0c4a6e;
 }
 
 @theme inline {
@@ -28,20 +20,56 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.gradient-bg {
+  /* A beautiful sky blue radial background, white/light in center, sky-blue outside */
+  background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f0f9ff 30%, #e0f2fe 60%, #bae6fd 100%);
+  background-attachment: fixed;
+  position: relative;
+  min-height: 100vh;
+}
+
+.gradient-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* The squared chexx pattern - darker lines */
+  background-image: 
+    linear-gradient(rgba(12, 74, 110, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 74, 110, 0.3) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center center;
+  z-index: -1;
+  pointer-events: none;
+  /* Make the grid faint in the center (white area) and dark on the outer edges (sky-blue area) */
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,1) 100%);
+  mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,1) 100%);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(240, 249, 255, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d4d4d4;
-  border-radius: 3px;
+  background: #7dd3fc;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a3a3a3;
+  background: #38bdf8;
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }

@@ -13,15 +13,16 @@ qdrant_client = QdrantClient(
     api_key=os.getenv("QDRANT_API_KEY")
 )
 
-def chat_with_pdf(query: str):
+def chat_with_pdf(query: str, project_id: str):
 
     embedding_model = OpenAIEmbeddings(
         model="text-embedding-3-large"
     )
 
+    collection_name = f"project_{project_id}"
     vector_db = QdrantVectorStore(
         client=qdrant_client,
-        collection_name="learning_vectors",
+        collection_name=collection_name,
         embedding=embedding_model,
     )
 

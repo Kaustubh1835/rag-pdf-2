@@ -18,7 +18,7 @@ client = QdrantClient(
 )
 
 
-def analyse_pdf(pdf_urls: List[str]):
+def analyse_pdf(pdf_urls: List[str], project_id: str):
     all_docs = []
 
     for url in pdf_urls:
@@ -53,13 +53,14 @@ def analyse_pdf(pdf_urls: List[str]):
         model="text-embedding-3-large"
     )
 
-    print("Indexing into Qdrant...")
+    collection_name = f"project_{project_id}"
+    print(f"Indexing into Qdrant collection: {collection_name}")
     QdrantVectorStore.from_documents(
     documents=split_docs,
     embedding=embedding_model,
     url=os.getenv("QDRANT_URL"),
     api_key=os.getenv("QDRANT_API_KEY"),
-    collection_name="learning_vectors"
+    collection_name=collection_name
 )
 
 
@@ -72,4 +73,4 @@ def analyse_pdf(pdf_urls: List[str]):
             except Exception:
                 pass
 
-    print("Indexing Done ✅")
+    print("Indexing Done")

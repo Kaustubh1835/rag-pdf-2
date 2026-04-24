@@ -22,19 +22,19 @@ if not firebase_admin._apps:
 
     if os.path.exists(sa_path):
         cred = credentials.Certificate(sa_path)
-        print(f"🔐 Firebase Admin: loaded from local file")
+        print(f"Firebase Admin: loaded from local file")
 
     # Option 2: ENV variable with full JSON (for Render / production)
     elif os.getenv("FIREBASE_SERVICE_ACCOUNT"):
         sa_dict = json.loads(os.getenv("FIREBASE_SERVICE_ACCOUNT"))
         cred = credentials.Certificate(sa_dict)
-        print(f"🔐 Firebase Admin: loaded from FIREBASE_SERVICE_ACCOUNT env var")
+        print(f"Firebase Admin: loaded from FIREBASE_SERVICE_ACCOUNT env var")
 
     else:
-        print("⚠️ Firebase Admin: no credentials found!")
+        print("Firebase Admin: no credentials found!")
 
     firebase_admin.initialize_app(cred, {"projectId": "pdf-rag-883ef"})
-    print("🔐 Firebase Admin initialized")
+    print("Firebase Admin initialized")
 
 
 # ──────────────────────────────────────────────
@@ -45,17 +45,17 @@ async def verify_firebase_token(request: Request) -> dict:
     auth_header = request.headers.get("Authorization", "")
 
     if not auth_header.startswith("Bearer "):
-        print("❌ Auth: Missing Authorization header")
+        print("Auth: Missing Authorization header")
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
     token = auth_header.split("Bearer ")[1]
 
     try:
         decoded = firebase_auth.verify_id_token(token, check_revoked=False)
-        print(f"✅ Auth: verified user {decoded.get('email', decoded['uid'])}")
+        print(f"Auth: verified user {decoded.get('email', decoded['uid'])}")
         return decoded
     except Exception as e:
-        print(f"❌ Auth: Token verification failed — {str(e)}")
+        print(f"Auth: Token verification failed — {str(e)}")
         raise HTTPException(status_code=401, detail=f"Invalid or expired token: {str(e)}")
 
 
