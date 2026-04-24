@@ -64,7 +64,7 @@ export default function RootLayout({
                 </ul>
               </div>
             </div>
-            <div style={{ maxWidth: "1200px", margin: "48px auto 0", pt: "32px", borderTop: "1px solid rgba(14, 165, 233, 0.1)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
+            <div style={{ maxWidth: "1200px", margin: "48px auto 0", paddingTop: "32px", borderTop: "1px solid rgba(14, 165, 233, 0.1)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
               <p style={{ color: "#94a3b8", fontSize: "12px", margin: 0 }}>
                 &copy; {new Date().getFullYear()} InsightPDF Inc. Built for document lovers.
               </p>

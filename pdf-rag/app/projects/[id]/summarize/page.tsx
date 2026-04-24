@@ -96,7 +96,7 @@ export default function ProjectSummarizePage({ params }: { params: Promise<{ id:
       cursorY += blockHeight + 8;
     });
 
-    const totalPages = pdf.internal.getNumberOfPages();
+    const totalPages = (pdf.internal as any).getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       pdf.setPage(i);
       pdf.setFontSize(10);
