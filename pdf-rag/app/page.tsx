@@ -81,6 +81,26 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteProject = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this project? All associated PDFs and chats will be lost.")) return;
+    
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      } else {
+        alert("Failed to delete project.");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut(auth);
     router.push("/signin");
@@ -212,14 +232,32 @@ export default function Dashboard() {
                   onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(14,165,233,0.12)"; e.currentTarget.style.borderColor = "rgba(14,165,233,0.3)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)"; }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
-                    <div style={{ width: "48px", height: "48px", background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>📄</div>
-                    <div>
-                      <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#0c4a6e", margin: 0 }}>{project.name}</h3>
-                      <p style={{ fontSize: "13px", color: "#94a3b8", margin: "4px 0 0 0" }}>
-                        {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <div style={{ width: "48px", height: "48px", background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>📄</div>
+                      <div>
+                        <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#0c4a6e", margin: 0 }}>{project.name}</h3>
+                        <p style={{ fontSize: "13px", color: "#94a3b8", margin: "4px 0 0 0" }}>
+                          {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                      </div>
                     </div>
+                    <button 
+                      onClick={(e) => handleDeleteProject(e, project.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: "8px",
+                        cursor: "pointer",
+                        color: "#94a3b8",
+                        borderRadius: "8px",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.backgroundColor = "#fef2f2"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; e.currentTarget.style.backgroundColor = "transparent"; }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                    </button>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Click to open →</span>

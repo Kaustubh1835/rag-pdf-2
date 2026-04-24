@@ -38,3 +38,28 @@ export async function GET(
     documents: projectDocuments,
   });
 }
+
+// DELETE /api/projects/[id] — delete a project and all its data
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await verifyToken(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  // Delete the project (ensure it belongs to this user)
+  const result = await db
+    .delete(projects)
+    .where(and(eq(projects.id, id), eq(projects.userId, user.uid)))
+    .returning();
+
+  if (result.length === 0) {
+    return NextResponse.json({ error: "Project not found or unauthorized" }, { status: 404 });
+  }
+
+  return NextResponse.json({ message: "Project deleted successfully" });
+}
