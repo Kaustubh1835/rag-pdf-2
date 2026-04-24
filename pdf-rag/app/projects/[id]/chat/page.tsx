@@ -69,6 +69,7 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
   const [sending, setSending] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -262,28 +263,62 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
     >
       {/* Sidebar */}
       <aside style={{
-        width: `${sidebarWidth}px`,
+        width: isSidebarMinimized ? "0px" : `${sidebarWidth}px`,
         background: "white",
-        borderRight: "1px solid #e2e8f0",
+        borderRight: isSidebarMinimized ? "none" : "1px solid #e2e8f0",
         display: "flex",
         flexDirection: "column",
         flexShrink: 0,
-        position: "relative"
+        position: "relative",
+        transition: isResizing ? "none" : "width 0.3s ease, border 0.3s ease",
+        overflow: isSidebarMinimized ? "hidden" : "visible"
       }}>
-        <div 
-          onMouseDown={startResizing}
+        {!isSidebarMinimized && (
+          <div 
+            onMouseDown={startResizing}
+            style={{
+              position: "absolute",
+              right: "-4px",
+              top: 0,
+              bottom: 0,
+              width: "8px",
+              cursor: "col-resize",
+              zIndex: 10,
+              background: isResizing ? "#0ea5e9" : "transparent",
+              transition: "background 0.2s"
+            }} 
+          />
+        )}
+        
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           style={{
             position: "absolute",
-            right: "-4px",
-            top: 0,
-            bottom: 0,
-            width: "8px",
-            cursor: "col-resize",
-            zIndex: 10,
-            background: isResizing ? "#0ea5e9" : "transparent",
-            transition: "background 0.2s"
-          }} 
-        />
+            right: isSidebarMinimized ? "-40px" : "10px",
+            top: "20px",
+            zIndex: 100,
+            width: "32px",
+            height: "32px",
+            borderRadius: "8px",
+            background: "white",
+            border: "1px solid #e2e8f0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            transition: "all 0.3s ease",
+            color: "#0c4a6e"
+          }}
+          title={isSidebarMinimized ? "Expand Sidebar" : "Minimize Sidebar"}
+        >
+          {isSidebarMinimized ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
+          )}
+        </button>
         <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9" }}>
           <button 
             onClick={createNewSession}
