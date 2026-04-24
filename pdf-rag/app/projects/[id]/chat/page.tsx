@@ -10,6 +10,12 @@ interface Message {
   content: string;
 }
 
+interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+}
+
 function renderMarkdown(text: string) {
   const lines = text.split("\n");
   let html = "";
@@ -56,6 +62,8 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
   const { id: projectId } = use(params);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -67,9 +75,57 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
       setUser(u);
       setAuthLoading(false);
       if (!u) router.push("/signin");
+      else fetchSessions();
     });
     return () => unsubscribe();
   }, [router]);
+
+  const fetchSessions = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/chat-sessions`);
+      if (res.ok) {
+        const data = await res.json();
+        setSessions(data);
+        if (data.length > 0 && !currentSessionId) {
+          selectSession(data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch sessions:", err);
+    }
+  };
+
+  const selectSession = async (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setMessages([]);
+    try {
+      const res = await fetch(`/api/chat-sessions/${sessionId}/messages`);
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch messages:", err);
+    }
+  };
+
+  const createNewSession = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/chat-sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: `Chat ${sessions.length + 1}` }),
+      });
+      if (res.ok) {
+        const newSession = await res.json();
+        setSessions([newSession, ...sessions]);
+        setCurrentSessionId(newSession.id);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("Failed to create session:", err);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,12 +135,41 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
     const trimmed = input.trim();
     if (!trimmed || sending) return;
 
+    let sessionId = currentSessionId;
+    if (!sessionId) {
+      // Auto-create session if none exists
+      try {
+        const res = await fetch(`/api/projects/${projectId}/chat-sessions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: trimmed.substring(0, 30) + "..." }),
+        });
+        if (res.ok) {
+          const newSession = await res.json();
+          setSessions([newSession, ...sessions]);
+          sessionId = newSession.id;
+          setCurrentSessionId(sessionId);
+        } else return;
+      } catch (err) {
+        console.error("Failed to auto-create session:", err);
+        return;
+      }
+    }
+
     const userMsg: Message = { role: "user", content: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setSending(true);
 
     try {
+      // 1. Save user message to DB
+      await fetch(`/api/chat-sessions/${sessionId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userMsg),
+      });
+
+      // 2. Get AI Response
       const token = await user?.getIdToken();
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
         method: "POST",
@@ -96,7 +181,16 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
         throw new Error(errData?.detail || "Chat request failed");
       }
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", content: data.answer || "No response received." }]);
+      const aiMsg: Message = { role: "assistant", content: data.answer || "No response received." };
+      
+      // 3. Save AI message to DB
+      await fetch(`/api/chat-sessions/${sessionId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(aiMsg),
+      });
+
+      setMessages((prev) => [...prev, aiMsg]);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
       setMessages((prev) => [...prev, { role: "assistant", content: msg }]);
@@ -122,105 +216,162 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
   if (!user) return null;
 
   return (
-    <div style={{ height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column", background: "transparent" }}>
-      {/* Header */}
-      <header style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 40px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(24px)",
-        borderBottom: "1px solid rgba(226,232,240,0.8)", flexShrink: 0, zIndex: 50,
+    <div style={{ height: "100vh", overflow: "hidden", display: "flex", background: "#f8fafc" }}>
+      {/* Sidebar */}
+      <aside style={{
+        width: "280px",
+        background: "white",
+        borderRight: "1px solid #e2e8f0",
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "32px", height: "32px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "16px" }}>I</div>
-          <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#0c4a6e", margin: 0, letterSpacing: "-0.5px" }}>InsightPDF Chat</h1>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <span style={{ fontSize: "14px", fontWeight: 600, color: "#0c4a6e", background: "rgba(14,165,233,0.1)", padding: "6px 12px", borderRadius: "8px" }}>
-            {user?.displayName || user?.email?.split("@")[0] || "User"}
-          </span>
-          <button onClick={() => router.push(`/projects/${projectId}`)} style={{ fontSize: "14px", fontWeight: 600, color: "#475569", background: "white", padding: "10px 20px", borderRadius: "10px", border: "1px solid #e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", transition: "all 0.2s ease", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}>
-            ← Back to Project
+        <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9" }}>
+          <button 
+            onClick={createNewSession}
+            style={{
+              width: "100%",
+              padding: "12px",
+              background: "#0c4a6e",
+              color: "white",
+              border: "none",
+              borderRadius: "10px",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
+            }}
+          >
+            <span>+</span> New Chat
           </button>
         </div>
-      </header>
-
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "48px 24px" }}>
-        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-          {messages.length === 0 && (
-            <div style={{ textAlign: "center", padding: "100px 0" }}>
-              <div style={{ width: "64px", height: "64px", background: "#f0f9ff", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "32px" }}>🤖</div>
-              <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#0c4a6e", marginBottom: "12px" }}>Start the conversation</h3>
-              <p style={{ fontSize: "16px", color: "#64748b", maxWidth: "400px", margin: "0 auto" }}>
-                Your PDFs have been indexed. Ask me anything about their contents!
-              </p>
-            </div>
-          )}
-
-          {messages.map((msg, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", alignItems: "flex-start", gap: "16px", marginBottom: "24px" }}>
-              {msg.role === "assistant" && (
-                <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px", boxShadow: "0 4px 10px rgba(14,165,233,0.2)" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="9" cy="16" r="1" /><circle cx="15" cy="16" r="1" /><path d="M12 2v4" /><path d="M8 7h8" /></svg>
-                </div>
-              )}
-              <div style={{
-                maxWidth: "75%", padding: "16px", borderRadius: "16px", fontSize: "15px", lineHeight: "1.6",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.05)", border: msg.role === "assistant" ? "1px solid rgba(14,165,233,0.15)" : "none",
-                ...(msg.role === "user"
-                  ? { backgroundColor: "#0c4a6e", color: "#ffffff", borderTopRightRadius: "4px" }
-                  : { backgroundColor: "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)", color: "#1e293b", borderTopLeftRadius: "4px" }),
-              }}>
-                {msg.role === "assistant" ? (
-                  <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
-                ) : msg.content}
-              </div>
-              {msg.role === "user" && (
-                <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#0c4a6e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px", boxShadow: "0 2px 8px rgba(12,74,110,0.3)" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                </div>
-              )}
-            </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+          {sessions.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => selectSession(s.id)}
+              style={{
+                width: "100%",
+                padding: "12px",
+                textAlign: "left",
+                background: currentSessionId === s.id ? "#f0f9ff" : "transparent",
+                border: "none",
+                borderRadius: "8px",
+                color: currentSessionId === s.id ? "#0c4a6e" : "#475569",
+                fontSize: "14px",
+                fontWeight: currentSessionId === s.id ? 600 : 500,
+                cursor: "pointer",
+                marginBottom: "4px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+              }}
+            >
+              {s.title}
+            </button>
           ))}
-
-          {sending && (
-            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-start", gap: "10px", marginBottom: "16px" }}>
-              <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="9" cy="16" r="1" /><circle cx="15" cy="16" r="1" /><path d="M12 2v4" /><path d="M8 7h8" /></svg>
-              </div>
-              <div style={{ padding: "16px", borderRadius: "16px", borderTopLeftRadius: "4px", backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(14,165,233,0.15)", fontSize: "15px", color: "#64748b", backdropFilter: "blur(10px)" }}>
-                Thinking…
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
         </div>
-      </div>
+      </aside>
 
-      {/* Input Bar */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.4)", padding: "32px 80px", flexShrink: 0, background: "rgba(255,255,255,0.4)", backdropFilter: "blur(20px)" }}>
-        <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", gap: "16px", background: "rgba(255,255,255,0.8)", padding: "12px", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 10px 40px rgba(0,0,0,0.05)" }}>
-          <input
-            type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
-            placeholder="Type your question…" disabled={sending}
-            style={{ flex: 1, padding: "16px 24px", fontSize: "15px", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "16px", outline: "none", color: "#0c4a6e", backgroundColor: "white", transition: "all 0.2s ease" }}
-            onFocus={(e) => { e.target.style.borderColor = "#0ea5e9"; e.target.style.boxShadow = "0 0 0 4px rgba(14,165,233,0.05)"; }}
-            onBlur={(e) => { e.target.style.borderColor = "rgba(14,165,233,0.1)"; e.target.style.boxShadow = "none"; }}
-          />
-          <button onClick={sendMessage} disabled={!input.trim() || sending} style={{
-            padding: "0 32px", fontSize: "15px", fontWeight: 700, color: "#fff",
-            background: !input.trim() || sending ? "#cbd5e1" : "#0c4a6e",
-            border: "none", borderRadius: "16px", cursor: !input.trim() || sending ? "not-allowed" : "pointer",
-            transition: "all 0.2s ease", flexShrink: 0,
-            boxShadow: !input.trim() || sending ? "none" : "0 4px 12px rgba(12,74,110,0.3)",
-          }}
-            onMouseEnter={(e) => { if (input.trim() && !sending) e.currentTarget.style.backgroundColor = "#073b5a"; }}
-            onMouseLeave={(e) => { if (input.trim() && !sending) e.currentTarget.style.backgroundColor = "#0c4a6e"; }}>
-            {sending ? "..." : "Send"}
-          </button>
+      {/* Main Chat Area */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {/* Header */}
+        <header style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 40px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(24px)",
+          borderBottom: "1px solid rgba(226,232,240,0.8)", flexShrink: 0, zIndex: 50,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ width: "32px", height: "32px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "16px" }}>I</div>
+            <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#0c4a6e", margin: 0, letterSpacing: "-0.5px" }}>InsightPDF Chat</h1>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <button onClick={() => router.push(`/projects/${projectId}`)} style={{ fontSize: "14px", fontWeight: 600, color: "#475569", background: "white", padding: "10px 20px", borderRadius: "10px", border: "1px solid #e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", transition: "all 0.2s ease" }}>
+              ← Back to Project
+            </button>
+          </div>
+        </header>
+
+        {/* Messages */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "48px 24px" }}>
+          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+            {messages.length === 0 && !sending && (
+              <div style={{ textAlign: "center", padding: "100px 0" }}>
+                <div style={{ width: "64px", height: "64px", background: "#f0f9ff", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "32px" }}>🤖</div>
+                <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#0c4a6e", marginBottom: "12px" }}>Start the conversation</h3>
+                <p style={{ fontSize: "16px", color: "#64748b", maxWidth: "400px", margin: "0 auto" }}>
+                  Select a chat from the sidebar or start a new one to begin.
+                </p>
+              </div>
+            )}
+
+            {messages.map((msg, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", alignItems: "flex-start", gap: "16px", marginBottom: "24px" }}>
+                {msg.role === "assistant" && (
+                  <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px", boxShadow: "0 4px 10px rgba(14,165,233,0.2)" }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="9" cy="16" r="1" /><circle cx="15" cy="16" r="1" /><path d="M12 2v4" /><path d="M8 7h8" /></svg>
+                  </div>
+                )}
+                <div style={{
+                  maxWidth: "75%", padding: "16px", borderRadius: "16px", fontSize: "15px", lineHeight: "1.6",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.05)", border: msg.role === "assistant" ? "1px solid rgba(14,165,233,0.15)" : "none",
+                  ...(msg.role === "user"
+                    ? { backgroundColor: "#0c4a6e", color: "#ffffff", borderTopRightRadius: "4px" }
+                    : { backgroundColor: "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)", color: "#1e293b", borderTopLeftRadius: "4px" }),
+                }}>
+                  {msg.role === "assistant" ? (
+                    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
+                  ) : msg.content}
+                </div>
+                {msg.role === "user" && (
+                  <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#0c4a6e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px", boxShadow: "0 2px 8px rgba(12,74,110,0.3)" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {sending && (
+              <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-start", gap: "10px", marginBottom: "16px" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="9" cy="16" r="1" /><circle cx="15" cy="16" r="1" /><path d="M12 2v4" /><path d="M8 7h8" /></svg>
+                </div>
+                <div style={{ padding: "16px", borderRadius: "16px", borderTopLeftRadius: "4px", backgroundColor: "rgba(255,255,255,0.6)", border: "1px solid rgba(14,165,233,0.15)", fontSize: "15px", color: "#64748b", backdropFilter: "blur(10px)" }}>
+                  Thinking…
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Input Bar */}
+        <div style={{ borderTop: "1px solid #e2e8f0", padding: "24px 40px", flexShrink: 0, background: "white" }}>
+          <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", gap: "16px", background: "rgba(255,255,255,0.8)", padding: "12px", borderRadius: "24px", border: "1px solid #f1f5f9", boxShadow: "0 10px 40px rgba(0,0,0,0.05)" }}>
+            <input
+              type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
+              placeholder="Type your question…" disabled={sending}
+              style={{ flex: 1, padding: "16px 24px", fontSize: "15px", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "16px", outline: "none", color: "#0c4a6e", backgroundColor: "white", transition: "all 0.2s ease" }}
+              onFocus={(e) => { e.target.style.borderColor = "#0ea5e9"; e.target.style.boxShadow = "0 0 0 4px rgba(14,165,233,0.05)"; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(14,165,233,0.1)"; e.target.style.boxShadow = "none"; }}
+            />
+            <button onClick={sendMessage} disabled={!input.trim() || sending} style={{
+              padding: "0 32px", fontSize: "15px", fontWeight: 700, color: "#fff",
+              background: !input.trim() || sending ? "#cbd5e1" : "#0c4a6e",
+              border: "none", borderRadius: "16px", cursor: !input.trim() || sending ? "not-allowed" : "pointer",
+              transition: "all 0.2s ease", flexShrink: 0,
+              boxShadow: !input.trim() || sending ? "none" : "0 4px 12px rgba(12,74,110,0.3)",
+            }}
+              onMouseEnter={(e) => { if (input.trim() && !sending) e.currentTarget.style.backgroundColor = "#073b5a"; }}
+              onMouseLeave={(e) => { if (input.trim() && !sending) e.currentTarget.style.backgroundColor = "#0c4a6e"; }}>
+              {sending ? "..." : "Send"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
