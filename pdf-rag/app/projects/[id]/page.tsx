@@ -182,101 +182,81 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   if (!user || !project) return null;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="min-h-screen flex flex-col">
       {/* ───── Navbar ───── */}
-      <header style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 40px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(24px)",
-        borderBottom: "1px solid rgba(226,232,240,0.8)", boxShadow: "0 4px 20px -2px rgba(0,0,0,0.05)",
-        position: "sticky", top: 0, zIndex: 50,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <button onClick={() => router.push("/")} style={{ display: "flex", alignItems: "center", gap: "8px", background: "none", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 16px", cursor: "pointer", fontSize: "14px", fontWeight: 600, color: "#475569", transition: "all 0.2s" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}>
+      <header className="flex flex-wrap items-center justify-between px-4 sm:px-10 py-3 sm:py-4 bg-white/70 backdrop-blur-xl border-b border-slate-200/80 shadow-xs sticky top-0 z-50 gap-3">
+        <div className="flex items-center gap-3 sm:gap-5 flex-wrap">
+          <button onClick={() => router.push("/")} className="flex items-center gap-2 bg-transparent border border-slate-200 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
             ← Back
           </button>
-          <div style={{ height: "24px", width: "1px", background: "#e2e8f0" }} />
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ width: "32px", height: "32px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "14px" }}>I</div>
-            <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0c4a6e", margin: 0 }}>{project.name}</h1>
+          <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-[#0c4a6e] rounded-lg flex items-center justify-center text-white font-bold text-sm">I</div>
+            <h1 className="text-base sm:text-lg font-extrabold text-[#0c4a6e] m-0 max-w-[180px] sm:max-w-none truncate">{project.name}</h1>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>{project.documents.length} document{project.documents.length !== 1 ? "s" : ""}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs sm:text-sm text-slate-500 font-medium">{project.documents.length} document{project.documents.length !== 1 ? "s" : ""}</span>
         </div>
       </header>
 
       {/* ───── Main ───── */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: "60px 24px 100px" }}>
-        <div style={{ width: "100%", maxWidth: "800px" }}>
+      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 sm:py-16 pb-24">
+        <div className="w-full max-w-[800px]">
           {/* Info Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", marginBottom: "48px" }}>
-            <div style={{ padding: "24px", background: "rgba(255,255,255,0.85)", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
-              <div style={{ width: "40px", height: "40px", background: "#f0f9ff", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", fontSize: "20px" }}>📤</div>
-              <p style={{ fontSize: "16px", fontWeight: 700, color: "#0c4a6e", margin: "0 0 8px 0" }}>Upload</p>
-              <p style={{ fontSize: "14px", color: "#64748b", margin: 0, lineHeight: "1.5" }}>Add up to 3 PDF documents.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+            <div className="p-5 sm:p-6 bg-white/85 border border-sky-500/10 rounded-2xl shadow-2xs">
+              <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center mb-4 text-xl">📤</div>
+              <p className="text-base font-bold text-[#0c4a6e] m-0 mb-1">Upload</p>
+              <p className="text-xs sm:text-sm text-slate-500 m-0 leading-relaxed">Add up to 3 PDF documents.</p>
             </div>
             <div
               onClick={() => { if (analysed || project.documents.length > 0) router.push(`/projects/${projectId}/summarize`); }}
-              style={{ cursor: analysed || project.documents.length > 0 ? "pointer" : "default", padding: "24px", background: "rgba(255,255,255,0.85)", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.02)", transition: "all 0.2s" }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"}
-              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+              className={`p-5 sm:p-6 bg-white/85 border border-sky-500/10 rounded-2xl shadow-2xs transition-all ${
+                analysed || project.documents.length > 0 ? "cursor-pointer hover:scale-[1.02]" : "cursor-default"
+              }`}
             >
-              <div style={{ width: "40px", height: "40px", background: "#f0f9ff", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", fontSize: "20px" }}>⚡</div>
-              <p style={{ fontSize: "16px", fontWeight: 700, color: "#0c4a6e", margin: "0 0 8px 0" }}>Summarize</p>
-              <p style={{ fontSize: "14px", color: "#64748b", margin: 0, lineHeight: "1.5" }}>Instant summaries in 4 modes.</p>
+              <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center mb-4 text-xl">⚡</div>
+              <p className="text-base font-bold text-[#0c4a6e] m-0 mb-1">Summarize</p>
+              <p className="text-xs sm:text-sm text-slate-500 m-0 leading-relaxed">Instant summaries in 4 modes.</p>
             </div>
-            <div style={{ padding: "24px", background: "rgba(255,255,255,0.85)", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
-              <div style={{ width: "40px", height: "40px", background: "#f0f9ff", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", fontSize: "20px" }}>💬</div>
-              <p style={{ fontSize: "16px", fontWeight: 700, color: "#0c4a6e", margin: "0 0 8px 0" }}>Chat</p>
-              <p style={{ fontSize: "14px", color: "#64748b", margin: 0, lineHeight: "1.5" }}>Ask questions in plain English.</p>
+            <div className="p-5 sm:p-6 bg-white/85 border border-sky-500/10 rounded-2xl shadow-2xs">
+              <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center mb-4 text-xl">💬</div>
+              <p className="text-base font-bold text-[#0c4a6e] m-0 mb-1">Chat</p>
+              <p className="text-xs sm:text-sm text-slate-500 m-0 leading-relaxed">Ask questions in plain English.</p>
             </div>
           </div>
 
           {/* Upload Area Card */}
-          <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(30px)", borderRadius: "32px", padding: "48px", boxShadow: "0 20px 60px rgba(0,0,0,0.05)", border: "1px solid rgba(255,255,255,0.6)" }}>
+          <div className="bg-white/85 backdrop-blur-2xl rounded-3xl p-5 sm:p-10 md:p-12 shadow-xl border border-white/60">
 
             {/* Existing Documents */}
             {project.documents.length > 0 && (
-              <div style={{ marginBottom: "32px" }}>
-                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#0c4a6e", marginBottom: "16px" }}>Uploaded Documents</h3>
+              <div className="mb-8">
+                <h3 className="text-sm sm:text-base font-bold text-[#0c4a6e] mb-4">Uploaded Documents</h3>
                 {project.documents.map((doc) => (
-                  <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "14px 16px", background: "rgba(240,249,255,0.6)", border: "1px solid rgba(14,165,233,0.1)", borderRadius: "12px", marginBottom: "10px" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "10px", backgroundColor: "#e0f2fe", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", flexShrink: 0 }}>📄</div>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ fontSize: "13px", fontWeight: 600, color: "#0c4a6e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.fileName}</p>
-                      <p style={{ fontSize: "11px", color: "#94a3b8", margin: "2px 0 0 0" }}>
-                        {new Date(doc.createdAt).toLocaleDateString()}
-                      </p>
+                  <div key={doc.id} className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 p-3.5 sm:p-4 bg-sky-50/60 border border-sky-500/10 rounded-xl mb-2.5">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-9 h-9 rounded-lg bg-sky-100 flex items-center justify-center text-base shrink-0">📄</div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-semibold text-[#0c4a6e] m-0 truncate">{doc.fileName}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {new Date(doc.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(`/projects/${projectId}/chat`);
                         }}
-                        style={{
-                          background: "#0ea5e9",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "6px",
-                          padding: "6px 12px",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          transition: "all 0.2s"
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#0284c7"}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#0ea5e9"}
+                        className="bg-sky-500 hover:bg-sky-600 text-white rounded-lg px-3 py-1.5 text-xs font-bold flex items-center gap-1 transition-colors"
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         Chat
                       </button>
-                      <span style={{ padding: "4px 10px", background: "#ecfdf5", color: "#059669", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>Saved</span>
+                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-md text-[11px] font-semibold">Saved</span>
                     </div>
                   </div>
                 ))}
@@ -285,37 +265,34 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
             {/* Upload Zone */}
             <div
-              style={{
-                border: `2px dashed ${dragOver ? "#0ea5e9" : "rgba(14,165,233,0.3)"}`,
-                borderRadius: "16px", padding: "40px 20px", textAlign: "center",
-                backgroundColor: dragOver ? "rgba(14,165,233,0.05)" : "rgba(255,255,255,0.5)",
-                cursor: "pointer", transition: "all 0.2s ease",
-              }}
+              className={`border-2 border-dashed rounded-2xl py-8 sm:py-10 px-4 text-center cursor-pointer transition-all ${
+                dragOver ? "border-sky-500 bg-sky-500/5" : "border-sky-500/30 bg-white/50"
+              }`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
             >
-              <input type="file" multiple accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={(e) => { if (e.target.files) addFiles(e.target.files); }} />
-              <p style={{ color: "#0c4a6e", fontWeight: 600, fontSize: "15px", margin: "0 0 8px 0" }}>Click or drag PDFs here</p>
-              <p style={{ color: "#64748b", fontSize: "13px", margin: 0 }}>PDF files only · Max 3 files per project</p>
+              <input type="file" multiple accept="application/pdf" ref={fileInputRef} className="hidden" onChange={(e) => { if (e.target.files) addFiles(e.target.files); }} />
+              <p className="text-[#0c4a6e] font-semibold text-sm sm:text-base mb-1">Click or drag PDFs here</p>
+              <p className="text-slate-500 text-xs">PDF files only · Max 3 files per project</p>
             </div>
 
             {/* Uploading Files */}
             {files.length > 0 && (
-              <div style={{ marginTop: "24px" }}>
+              <div className="mt-6">
                 {files.map((f, idx) => (
-                  <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(14,165,233,0.15)", borderRadius: "12px", marginBottom: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px", overflow: "hidden" }}>
-                      <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: "#e0f2fe", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "18px" }}>📄</div>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: "13px", fontWeight: 500, color: "#333", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.file.name}</p>
-                        <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0 0" }}>
+                  <div key={idx} className="flex items-center justify-between p-3.5 sm:p-4 bg-white/80 border border-sky-500/15 rounded-xl mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center shrink-0 text-lg">📄</div>
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-medium text-slate-800 m-0 truncate">{f.file.name}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
                           {f.status === "uploading" ? `Uploading… ${f.progress}%` : f.status === "done" ? "Uploaded ✓" : f.status === "error" ? "Failed" : "Pending"}
                         </p>
                       </div>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); removeFile(idx); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: "18px", padding: "8px" }}>×</button>
+                    <button onClick={(e) => { e.stopPropagation(); removeFile(idx); }} className="bg-transparent border-none cursor-pointer text-slate-400 text-lg p-2 hover:text-slate-600">×</button>
                   </div>
                 ))}
               </div>
@@ -326,14 +303,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               <button
                 onClick={() => { if (allUploaded && !analysing) handleAnalyse(); }}
                 disabled={!allUploaded || analysing}
-                style={{
-                  width: "100%", padding: "16px", fontSize: "16px", fontWeight: 600, color: "#fff",
-                  backgroundColor: !allUploaded || analysing ? "#cbd5e1" : "#0c4a6e",
-                  border: "none", borderRadius: "12px",
-                  cursor: !allUploaded || analysing ? "not-allowed" : "pointer",
-                  transition: "all 0.2s ease", marginTop: "24px",
-                  boxShadow: !allUploaded || analysing ? "none" : "0 4px 14px rgba(12,74,110,0.3)",
-                }}
+                className={`w-full py-4 text-sm sm:text-base font-semibold text-white rounded-xl transition-all mt-6 ${
+                  !allUploaded || analysing
+                    ? "bg-slate-300 cursor-not-allowed"
+                    : "bg-[#0c4a6e] hover:bg-[#073b5a] shadow-md shadow-[#0c4a6e]/30"
+                }`}
               >
                 {analysing ? "Analysing…" : "Analyse PDFs"}
               </button>
@@ -341,17 +315,13 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
             {/* Success + Navigate */}
             {analysed && (
-              <div style={{ textAlign: "center", marginTop: "24px" }}>
-                <p style={{ fontSize: "14px", color: "#10b981", fontWeight: 500, margin: "0 0 16px 0" }}>✓ PDFs analysed successfully</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <button onClick={() => router.push(`/projects/${projectId}/chat`)} style={{ padding: "16px", backgroundColor: "#0c4a6e", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 14px rgba(12,74,110,0.3)", transition: "all 0.2s" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#073b5a")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#0c4a6e")}>
+              <div className="text-center mt-6">
+                <p className="text-xs sm:text-sm text-emerald-500 font-medium mb-4">✓ PDFs analysed successfully</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button onClick={() => router.push(`/projects/${projectId}/chat`)} className="w-full py-4 bg-[#0c4a6e] hover:bg-[#073b5a] text-white rounded-xl text-sm sm:text-base font-semibold shadow-md shadow-[#0c4a6e]/30 transition-all">
                     Start Chat
                   </button>
-                  <button onClick={() => router.push(`/projects/${projectId}/summarize`)} style={{ padding: "16px", backgroundColor: "white", color: "#0c4a6e", border: "1.5px solid #0c4a6e", borderRadius: "12px", fontSize: "16px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f9ff")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}>
+                  <button onClick={() => router.push(`/projects/${projectId}/summarize`)} className="w-full py-4 bg-white hover:bg-sky-50 text-[#0c4a6e] border-2 border-[#0c4a6e] rounded-xl text-sm sm:text-base font-semibold transition-all">
                     Summarize
                   </button>
                 </div>
@@ -359,7 +329,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             )}
 
             {analyseError && (
-              <div style={{ padding: "14px", backgroundColor: "rgba(220,38,38,0.05)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "12px", color: "#dc2626", fontSize: "14px", textAlign: "center", marginTop: "16px" }}>
+              <div className="p-3.5 bg-red-500/5 border border-red-500/20 rounded-xl text-red-600 text-xs sm:text-sm text-center mt-4">
                 {analyseError}
               </div>
             )}

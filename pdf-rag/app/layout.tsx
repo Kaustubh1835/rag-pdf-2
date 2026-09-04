@@ -14,6 +14,11 @@ export const metadata: Metadata = {
     "Upload your PDFs and have an intelligent conversation with their contents.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

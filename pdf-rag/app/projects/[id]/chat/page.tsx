@@ -45,6 +45,12 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setIsSidebarMinimized(true);
+    }
+  }, []);
+
   const startResizing = () => {
     setIsResizing(true);
   };
@@ -231,16 +237,11 @@ export default function ProjectChatPage({ params }: { params: Promise<{ id: stri
       {/* Sidebar */}
       <motion.aside 
         initial={false}
-        animate={{ width: isSidebarMinimized ? 0 : sidebarWidth }}
+        animate={{ width: isSidebarMinimized ? 0 : (typeof window !== 'undefined' && window.innerWidth < 768 ? Math.min(sidebarWidth, 280) : sidebarWidth) }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="bg-white flex flex-col shrink-0 relative md:relative absolute inset-y-0 left-0 z-40 shadow-2xl md:shadow-none"
         style={{
-          background: "white",
           borderRight: isSidebarMinimized ? "none" : "1px solid #eee",
-          display: "flex",
-          flexDirection: "column",
-          flexShrink: 0,
-          position: "relative",
-          zIndex: 40,
         }}
       >
         {!isSidebarMinimized && (

@@ -109,95 +109,88 @@ export default function ProjectSummarizePage({ params }: { params: Promise<{ id:
   if (loading) return null;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <header style={{ padding: "16px 40px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(226,232,240,0.8)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "32px", height: "32px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold" }}>I</div>
-          <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#0c4a6e" }}>InsightPDF</h1>
+      <header className="px-4 sm:px-10 py-3 sm:py-4 bg-white/70 backdrop-blur-xl border-b border-slate-200/80 flex justify-between items-center sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-[#0c4a6e] rounded-lg flex items-center justify-center text-white font-bold">I</div>
+          <h1 className="text-lg sm:text-xl font-extrabold text-[#0c4a6e]">InsightPDF</h1>
         </div>
-        <button onClick={() => router.push(`/projects/${projectId}`)} style={{ background: "transparent", border: "1px solid #0ea5e9", color: "#0ea5e9", padding: "8px 20px", borderRadius: "10px", fontWeight: 600, cursor: "pointer" }}>Back to Project</button>
+        <button onClick={() => router.push(`/projects/${projectId}`)} className="bg-transparent border border-sky-500 text-sky-500 hover:bg-sky-50 px-3 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors">Back to Project</button>
       </header>
 
-      <main style={{ flex: 1, padding: "60px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: "100%", maxWidth: "900px" }}>
-          <h2 style={{ fontSize: "32px", fontWeight: 800, color: "#0c4a6e", marginBottom: "8px" }}>Summarize Your Documents</h2>
-          <p style={{ color: "#64748b", marginBottom: "40px" }}>Choose a mode and get instant insights from your project's PDFs.</p>
+      <main className="flex-1 px-4 sm:px-6 py-8 sm:py-16 flex flex-col items-center">
+        <div className="w-full max-w-[900px]">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0c4a6e] mb-2">Summarize Your Documents</h2>
+          <p className="text-slate-500 text-xs sm:text-sm mb-8">Choose a mode and get instant insights from your project's PDFs.</p>
 
           {/* Mode Selector */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "32px" }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
             {[
               { id: "short", label: "Short Summary", icon: "📝" },
               { id: "detailed", label: "Detailed", icon: "📖" },
               { id: "key_points", label: "Key Points", icon: "🎯" },
               { id: "exam_mode", label: "Exam Mode", icon: "🎓" },
             ].map((mode) => (
-              <button key={mode.id} onClick={() => setActiveType(mode.id as SummaryType)} style={{
-                padding: "24px", background: activeType === mode.id ? "white" : "rgba(255,255,255,0.4)",
-                border: activeType === mode.id ? "2px solid #0ea5e9" : "1px solid rgba(14,165,233,0.1)",
-                borderRadius: "20px", cursor: "pointer", textAlign: "center", transition: "all 0.2s ease",
-                boxShadow: activeType === mode.id ? "0 10px 25px -5px rgba(14,165,233,0.2)" : "none",
-              }}>
-                <div style={{ fontSize: "24px", marginBottom: "12px" }}>{mode.icon}</div>
-                <div style={{ fontWeight: 700, color: "#0c4a6e", fontSize: "14px" }}>{mode.label}</div>
+              <button key={mode.id} onClick={() => setActiveType(mode.id as SummaryType)} className={`p-4 sm:p-6 rounded-2xl cursor-pointer text-center transition-all ${
+                activeType === mode.id
+                  ? "bg-white border-2 border-sky-500 shadow-lg shadow-sky-500/20"
+                  : "bg-white/40 border border-sky-500/10 hover:bg-white/70"
+              }`}>
+                <div className="text-xl sm:text-2xl mb-2 sm:mb-3">{mode.icon}</div>
+                <div className="font-bold text-[#0c4a6e] text-xs sm:text-sm">{mode.label}</div>
               </button>
             ))}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <button onClick={handleSummarize} disabled={summarizing} style={{
-              width: "100%", maxWidth: "400px", padding: "18px",
-              background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)",
-              color: "white", border: "none", borderRadius: "16px", fontSize: "16px", fontWeight: 700,
-              cursor: summarizing ? "not-allowed" : "pointer", marginBottom: "40px",
-              boxShadow: "0 10px 20px rgba(14,165,233,0.2)", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", transition: "transform 0.2s ease",
-            }}
-              onMouseEnter={(e) => !summarizing && (e.currentTarget.style.transform = "translateY(-2px)")}
-              onMouseLeave={(e) => !summarizing && (e.currentTarget.style.transform = "translateY(0)")}>
+          <div className="flex justify-center">
+            <button onClick={handleSummarize} disabled={summarizing} className={`w-full max-w-[400px] py-4 text-sm sm:text-base font-bold text-white rounded-2xl mb-8 flex items-center justify-center gap-2 transition-all ${
+              summarizing
+                ? "bg-slate-300 cursor-not-allowed"
+                : "bg-gradient-to-r from-sky-500 to-[#0c4a6e] shadow-lg shadow-sky-500/25 hover:-translate-y-0.5"
+            }`}>
               {summarizing ? "Generating..." : "Generate Summary"}
             </button>
           </div>
 
           {/* Summary Display */}
-          <div style={{ minHeight: "400px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(30px)", borderRadius: "32px", padding: "48px", border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 20px 60px rgba(0,0,0,0.05)" }}>
+          <div className="min-h-[350px] sm:min-h-[400px] bg-white/85 backdrop-blur-2xl rounded-3xl p-5 sm:p-10 border border-white/60 shadow-xl">
             {summarizing ? (
-              <div style={{ height: "300px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ width: "40px", height: "40px", border: "4px solid rgba(14,165,233,0.1)", borderTopColor: "#0ea5e9", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                <p style={{ marginTop: "20px", color: "#64748b", fontWeight: 500 }}>Reading your document...</p>
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <div className="h-[250px] sm:h-[300px] flex flex-col items-center justify-center">
+                <div className="w-10 h-10 border-4 border-sky-500/10 border-t-sky-500 rounded-full animate-spin mb-4" />
+                <p className="text-slate-500 text-sm font-medium">Reading your document...</p>
               </div>
             ) : summary ? (
-              <div style={{ animation: "fadeIn 0.5s ease forwards" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
-                  <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#0c4a6e" }}>Generated Summary</h3>
-                  <button onClick={handleDownloadPDF} style={{ color: "#0ea5e9", background: "rgba(14,165,233,0.1)", border: "1px solid rgba(14,165,233,0.2)", fontSize: "14px", fontWeight: 600, cursor: "pointer", padding: "8px 16px", borderRadius: "8px" }}>
+              <div className="animate-fadeIn">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-8">
+                  <h3 className="text-lg sm:text-xl font-bold text-[#0c4a6e]">Generated Summary</h3>
+                  <button onClick={handleDownloadPDF} className="text-sky-500 bg-sky-500/10 border border-sky-500/20 text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl hover:bg-sky-500/20 transition-colors">
                     Download PDF
                   </button>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                <div className="flex flex-col gap-4">
                   {summary.map((point, i) => (
-                    <div key={i} style={{ display: "flex", gap: "16px", alignItems: "start", background: "white", padding: "20px", borderRadius: "16px", border: "1px solid rgba(14,165,233,0.05)", boxShadow: activeType === "detailed" ? "0 4px 12px rgba(0,0,0,0.02)" : "none" }}>
-                      <div style={{ width: "28px", height: "28px", background: "#f0f9ff", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#0ea5e9", fontSize: "13px", fontWeight: "bold", flexShrink: 0 }}>{i + 1}</div>
-                      <div style={{ color: "#334155", fontSize: "16px", lineHeight: 1.7, margin: 0, textAlign: "left" }}>
+                    <div key={i} className="flex gap-3 sm:gap-4 items-start bg-white p-4 sm:p-5 rounded-2xl border border-sky-500/10 shadow-xs">
+                      <div className="w-7 h-7 bg-sky-50 rounded-lg flex items-center justify-center text-sky-500 text-xs font-bold shrink-0 mt-0.5">{i + 1}</div>
+                      <div className="text-slate-700 text-sm sm:text-base leading-relaxed m-0 text-left flex-1">
                         {typeof point === "object" && point !== null ? (
                           <>
-                            <p style={{ fontWeight: 700, marginBottom: "8px", color: "#0c4a6e" }}>{(point as any).heading || ""}</p>
-                            <p style={{ margin: 0 }}>{(point as any).summary || (point as any).content || JSON.stringify(point)}</p>
+                            <p className="font-bold mb-2 text-[#0c4a6e]">{(point as any).heading || ""}</p>
+                            <p className="m-0">{(point as any).summary || (point as any).content || JSON.stringify(point)}</p>
                           </>
                         ) : (
-                          <p style={{ margin: 0 }}>{point}</p>
+                          <p className="m-0">{point}</p>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
-                <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
               </div>
             ) : (
-              <div style={{ height: "300px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                <div style={{ width: "64px", height: "64px", background: "#f0f9ff", borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", marginBottom: "20px" }}>📄</div>
-                <h4 style={{ color: "#0c4a6e", marginBottom: "8px" }}>No summary generated yet</h4>
-                <p style={{ color: "#64748b", maxWidth: "300px" }}>Select a mode above to start extracting knowledge from your PDFs.</p>
+              <div className="h-[250px] sm:h-[300px] flex flex-col items-center justify-center text-center">
+                <div className="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-4">📄</div>
+                <h4 className="text-base sm:text-lg font-bold text-[#0c4a6e] mb-2">No summary generated yet</h4>
+                <p className="text-slate-500 text-xs sm:text-sm max-w-[300px]">Select a mode above to start extracting knowledge from your PDFs.</p>
               </div>
             )}
           </div>

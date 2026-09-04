@@ -39,29 +39,8 @@ export default function SignInScreen() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "transparent",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "440px",
-          padding: "56px 40px",
-          border: "1px solid rgba(255, 255, 255, 0.6)",
-          borderRadius: "32px",
-          background: "rgba(255, 255, 255, 0.85)",
-          backdropFilter: "blur(30px)",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.05)",
-          textAlign: "center",
-        }}
-      >
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-transparent">
+      <div className="w-full max-w-[440px] px-5 sm:px-10 py-10 sm:py-14 border border-white/60 rounded-[28px] sm:rounded-[32px] bg-white/85 backdrop-blur-xl shadow-xl text-center">
         <div style={{ width: "48px", height: "48px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "20px", margin: "0 auto 24px" }}>I</div>
         <h1
           style={{

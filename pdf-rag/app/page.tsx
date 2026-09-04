@@ -119,147 +119,99 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="min-h-screen flex flex-col">
       {/* ───── Navbar ───── */}
-      <header style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 40px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(24px)",
-        borderBottom: "1px solid rgba(226,232,240,0.8)", boxShadow: "0 4px 20px -2px rgba(0,0,0,0.05)",
-        position: "sticky", top: 0, zIndex: 50,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ width: "36px", height: "36px", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "18px", boxShadow: "0 4px 10px rgba(14,165,233,0.3)" }}>I</div>
-            <h1 style={{ fontSize: "22px", fontWeight: 800, color: "#0c4a6e", margin: 0, letterSpacing: "-0.5px" }}>InsightPDF</h1>
+      <header className="flex flex-wrap items-center justify-between px-4 sm:px-10 py-3 sm:py-4 bg-white/70 backdrop-blur-xl border-b border-slate-200/80 shadow-xs sticky top-0 z-50 gap-3">
+        <div className="flex items-center gap-4 sm:gap-10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-[#0c4a6e] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-md shadow-sky-500/30">I</div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-[#0c4a6e] m-0 tracking-tight">InsightPDF</h1>
           </div>
-          <nav style={{ display: "flex", gap: "28px", alignItems: "center" }}>
-            <a href="#" style={{ fontSize: "15px", fontWeight: 600, color: "#0ea5e9", textDecoration: "none" }}>Dashboard</a>
-            <a href="#" style={{ fontSize: "15px", fontWeight: 500, color: "#64748b", textDecoration: "none", transition: "color 0.2s" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#0f172a")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#64748b")}>Settings</a>
+          <nav className="flex gap-4 sm:gap-7 items-center">
+            <a href="#" className="text-sm font-semibold text-sky-500">Dashboard</a>
+            <a href="#" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Settings</a>
           </nav>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "6px 16px", background: "white", borderRadius: "30px", border: "1px solid rgba(226,232,240,0.8)", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
-            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#e0f2fe", color: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>
+        <div className="flex items-center gap-3 sm:gap-5">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 bg-white rounded-full border border-slate-200/80 shadow-2xs">
+            <div className="w-7 h-7 rounded-full bg-sky-100 text-sky-500 flex items-center justify-center font-bold text-xs">
               {(user?.displayName || user?.email || "U")[0].toUpperCase()}
             </div>
-            <span style={{ fontSize: "14px", fontWeight: 600, color: "#334155" }}>
+            <span className="text-xs sm:text-sm font-semibold text-slate-700 max-w-[100px] sm:max-w-[160px] truncate">
               {user?.displayName || user?.email?.split("@")[0] || "User"}
             </span>
           </div>
-          <button onClick={handleSignOut} style={{ fontSize: "14px", fontWeight: 600, color: "#64748b", background: "transparent", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 16px", cursor: "pointer", transition: "all 0.2s ease" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; e.currentTarget.style.color = "#0f172a"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#64748b"; }}>
+          <button onClick={handleSignOut} className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 transition-all">
             Sign out
           </button>
         </div>
       </header>
 
       {/* ───── Main Content ───── */}
-      <main style={{ flex: 1, padding: "60px 40px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+      <main className="flex-1 px-4 sm:px-10 py-8 sm:py-16">
+        <div className="max-w-[1100px] mx-auto">
           {/* Header Row */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "48px" }}>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
             <div>
-              <h2 style={{ fontSize: "36px", fontWeight: 800, color: "#0c4a6e", margin: "0 0 8px 0", letterSpacing: "-0.5px" }}>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-[#0c4a6e] m-0 tracking-tight">
                 Your Projects
               </h2>
-              <p style={{ fontSize: "16px", color: "#64748b", margin: 0 }}>
+              <p className="text-sm sm:text-base text-slate-500 mt-1">
                 Create a project, upload PDFs, and start chatting with your documents.
               </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                padding: "12px 28px", fontSize: "15px", fontWeight: 700,
-                color: "white", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)",
-                border: "none", borderRadius: "14px", cursor: "pointer",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                boxShadow: "0 6px 20px rgba(14,165,233,0.25)",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 28px rgba(14,165,233,0.35)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(14,165,233,0.25)"; }}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-sky-500 to-[#0c4a6e] rounded-xl shadow-lg shadow-sky-500/25 hover:-translate-y-0.5 transition-transform"
             >
-              <span style={{ fontSize: "20px", lineHeight: 1 }}>+</span> New Project
+              <span className="text-xl leading-none">+</span> New Project
             </button>
           </div>
 
           {/* Projects Grid */}
           {loadingProjects ? (
-            <div style={{ textAlign: "center", padding: "80px 0" }}>
-              <div style={{ width: "40px", height: "40px", border: "4px solid rgba(14,165,233,0.1)", borderTopColor: "#0ea5e9", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 20px" }} />
-              <p style={{ color: "#64748b" }}>Loading projects…</p>
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div className="text-center py-20">
+              <div className="w-10 h-10 border-4 border-sky-500/10 border-t-sky-500 rounded-full animate-spin mx-auto mb-5" />
+              <p className="text-slate-500">Loading projects…</p>
             </div>
           ) : projects.length === 0 ? (
-            <div style={{
-              textAlign: "center", padding: "100px 40px",
-              background: "rgba(255,255,255,0.6)", borderRadius: "32px",
-              border: "2px dashed rgba(14,165,233,0.2)",
-            }}>
-              <div style={{ width: "80px", height: "80px", background: "#f0f9ff", borderRadius: "24px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "40px" }}>📁</div>
-              <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#0c4a6e", marginBottom: "12px" }}>No projects yet</h3>
-              <p style={{ fontSize: "16px", color: "#64748b", maxWidth: "400px", margin: "0 auto 32px" }}>
+            <div className="text-center py-16 sm:py-24 px-6 bg-white/60 rounded-3xl border-2 border-dashed border-sky-500/20">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-sky-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl sm:text-4xl">📁</div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-[#0c4a6e] mb-3">No projects yet</h3>
+              <p className="text-sm sm:text-base text-slate-500 max-w-[400px] mx-auto mb-8">
                 Create your first project to start uploading PDFs and chatting with them using AI.
               </p>
               <button
                 onClick={() => setShowModal(true)}
-                style={{
-                  padding: "14px 32px", fontSize: "15px", fontWeight: 700,
-                  color: "white", background: "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)",
-                  border: "none", borderRadius: "14px", cursor: "pointer",
-                  boxShadow: "0 6px 20px rgba(14,165,233,0.25)",
-                }}
+                className="px-6 py-3.5 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-sky-500 to-[#0c4a6e] rounded-xl shadow-lg shadow-sky-500/25"
               >
                 + Create First Project
               </button>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((project) => (
                 <div
                   key={project.id}
                   onClick={() => router.push(`/projects/${project.id}`)}
-                  style={{
-                    padding: "32px", background: "rgba(255,255,255,0.85)",
-                    backdropFilter: "blur(20px)", borderRadius: "24px",
-                    border: "1px solid rgba(255,255,255,0.6)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.04)",
-                    cursor: "pointer", transition: "all 0.25s ease",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(14,165,233,0.12)"; e.currentTarget.style.borderColor = "rgba(14,165,233,0.3)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)"; }}
+                  className="p-6 sm:p-8 bg-white/85 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/60 shadow-xs hover:shadow-lg hover:border-sky-500/30 hover:-translate-y-1 transition-all cursor-pointer"
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                      <div>
-                        <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#0c4a6e", margin: 0 }}>{project.name}</h3>
-                        <p style={{ fontSize: "13px", color: "#94a3b8", margin: "4px 0 0 0" }}>
-                          {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </p>
-                      </div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-[#0c4a6e] m-0">{project.name}</h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {new Date(project.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
                     </div>
                     <button 
                       onClick={(e) => handleDeleteProject(e, project.id)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: "8px",
-                        cursor: "pointer",
-                        color: "#94a3b8",
-                        borderRadius: "8px",
-                        transition: "all 0.2s"
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.backgroundColor = "#fef2f2"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; e.currentTarget.style.backgroundColor = "transparent"; }}
+                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                     </button>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Click to open →</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs sm:text-sm text-slate-500 font-medium">Click to open →</span>
                   </div>
                 </div>
               ))}
@@ -267,31 +219,23 @@ export default function Dashboard() {
               {/* Add New Project Card */}
               <div
                 onClick={() => setShowModal(true)}
-                style={{
-                  padding: "32px", background: "rgba(255,255,255,0.4)",
-                  borderRadius: "24px", border: "2px dashed rgba(14,165,233,0.25)",
-                  cursor: "pointer", transition: "all 0.25s ease",
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                  minHeight: "180px",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(240,249,255,0.8)"; e.currentTarget.style.borderColor = "#0ea5e9"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.4)"; e.currentTarget.style.borderColor = "rgba(14,165,233,0.25)"; }}
+                className="p-6 sm:p-8 bg-white/40 hover:bg-sky-50/80 rounded-2xl sm:rounded-3xl border-2 border-dashed border-sky-500/25 hover:border-sky-500 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[160px] sm:min-h-[180px]"
               >
-                <div style={{ width: "48px", height: "48px", background: "#e0f2fe", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
-                  <span style={{ fontSize: "28px", color: "#0ea5e9", lineHeight: 1 }}>+</span>
+                <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center mb-3">
+                  <span className="text-2xl text-sky-500 font-bold leading-none">+</span>
                 </div>
-                <p style={{ fontSize: "15px", fontWeight: 600, color: "#0ea5e9", margin: 0 }}>New Project</p>
+                <p className="text-sm sm:text-base font-semibold text-sky-500 m-0">New Project</p>
               </div>
             </div>
           )}
 
           {/* ───── Feature Sections ───── */}
-          <div style={{ width: "100%", marginTop: "120px" }}>
-            <div style={{ textAlign: "center", marginBottom: "64px" }}>
-              <h2 style={{ fontSize: "32px", fontWeight: 800, color: "#0c4a6e", marginBottom: "16px" }}>Powerful features for everyone</h2>
-              <p style={{ fontSize: "18px", color: "#64748b" }}>Everything you need to master your PDF library.</p>
+          <div className="w-full mt-16 sm:mt-28">
+            <div className="text-center mb-10 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0c4a6e] mb-3">Powerful features for everyone</h2>
+              <p className="text-sm sm:text-base text-slate-500">Everything you need to master your PDF library.</p>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "100px" }}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 sm:mb-24">
               {[
                 { icon: "🔍", title: "Deep Semantic Search", desc: "Our AI understands context and meaning, not just keywords." },
                 { icon: "🔒", title: "Secure & Private", desc: "Your documents are encrypted and only accessible to you." },
@@ -300,27 +244,27 @@ export default function Dashboard() {
                 { icon: "⚡", title: "Instant Extraction", desc: "Get precise answers from complex tables and text in seconds." },
                 { icon: "📊", title: "Summary Modes", desc: "Short, Detailed, Key Points, and Exam Mode summaries." },
               ].map((f, i) => (
-                <div key={i} style={{ padding: "32px", background: "rgba(255,255,255,0.85)", borderRadius: "24px", border: "1px solid rgba(14,165,233,0.08)", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
-                  <div style={{ fontSize: "32px", marginBottom: "16px" }}>{f.icon}</div>
-                  <h4 style={{ fontSize: "17px", fontWeight: 700, color: "#0c4a6e", marginBottom: "8px" }}>{f.title}</h4>
-                  <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+                <div key={i} className="p-6 sm:p-8 bg-white/85 rounded-2xl border border-sky-500/10 shadow-2xs">
+                  <div className="text-3xl mb-4">{f.icon}</div>
+                  <h4 className="text-base font-bold text-[#0c4a6e] mb-2">{f.title}</h4>
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed m-0">{f.desc}</p>
                 </div>
               ))}
             </div>
 
             {/* Stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "80px", background: "white", padding: "48px", borderRadius: "32px", border: "1px solid rgba(14,165,233,0.1)", textAlign: "center" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16 sm:mb-20 bg-white p-6 sm:p-12 rounded-3xl border border-sky-500/10 text-center">
               <div>
-                <p style={{ fontSize: "40px", fontWeight: 800, color: "#0ea5e9", margin: "0 0 8px 0" }}>99%</p>
-                <p style={{ fontSize: "14px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>Accuracy</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-sky-500 m-0 mb-1">99%</p>
+                <p className="text-xs sm:text-sm font-semibold text-slate-500 uppercase">Accuracy</p>
               </div>
               <div>
-                <p style={{ fontSize: "40px", fontWeight: 800, color: "#0ea5e9", margin: "0 0 8px 0" }}>2s</p>
-                <p style={{ fontSize: "14px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>Avg. Response</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-sky-500 m-0 mb-1">2s</p>
+                <p className="text-xs sm:text-sm font-semibold text-slate-500 uppercase">Avg. Response</p>
               </div>
               <div>
-                <p style={{ fontSize: "40px", fontWeight: 800, color: "#0ea5e9", margin: "0 0 8px 0" }}>1k+</p>
-                <p style={{ fontSize: "14px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>PDFs Indexed</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-sky-500 m-0 mb-1">1k+</p>
+                <p className="text-xs sm:text-sm font-semibold text-slate-500 uppercase">PDFs Indexed</p>
               </div>
             </div>
           </div>
@@ -330,31 +274,21 @@ export default function Dashboard() {
       {/* ───── Create Project Modal ───── */}
       {showModal && (
         <div
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
-            backdropFilter: "blur(8px)", display: "flex", alignItems: "center",
-            justifyContent: "center", zIndex: 100, animation: "fadeIn 0.2s ease",
-          }}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn"
           onClick={() => { setShowModal(false); setNewProjectName(""); }}
         >
           <div
-            style={{
-              width: "100%", maxWidth: "480px", padding: "48px",
-              background: "rgba(255,255,255,0.95)", borderRadius: "28px",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.15)",
-              border: "1px solid rgba(255,255,255,0.8)",
-              animation: "slideUp 0.25s ease",
-            }}
+            className="w-full max-w-[480px] p-6 sm:p-10 bg-white/95 rounded-3xl shadow-2xl border border-white/80 animate-slideUp"
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
-              <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#0c4a6e", margin: 0 }}>Create New Project</h3>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-[#0c4a6e] m-0">Create New Project</h3>
               <button
                 onClick={() => { setShowModal(false); setNewProjectName(""); }}
-                style={{ background: "none", border: "none", fontSize: "24px", color: "#94a3b8", cursor: "pointer", padding: "4px" }}
+                className="bg-transparent border-none text-2xl text-slate-400 cursor-pointer p-1"
               >×</button>
             </div>
-            <p style={{ color: "#64748b", fontSize: "15px", margin: "0 0 24px 0", lineHeight: 1.6 }}>
+            <p className="text-slate-500 text-xs sm:text-sm mb-6 leading-relaxed">
               Give your project a name. You can upload PDFs and chat with them inside.
             </p>
             <input
@@ -364,41 +298,23 @@ export default function Dashboard() {
               onChange={(e) => setNewProjectName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleCreateProject(); }}
               autoFocus
-              style={{
-                width: "100%", padding: "16px 20px", fontSize: "15px",
-                border: "1px solid #e2e8f0", borderRadius: "14px",
-                outline: "none", color: "#0c4a6e", backgroundColor: "#f8fafc",
-                transition: "border-color 0.2s, box-shadow 0.2s",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => { e.target.style.borderColor = "#0ea5e9"; e.target.style.boxShadow = "0 0 0 4px rgba(14,165,233,0.08)"; }}
-              onBlur={(e) => { e.target.style.borderColor = "#e2e8f0"; e.target.style.boxShadow = "none"; }}
+              className="w-full px-4 py-3 sm:py-4 text-sm sm:text-base border border-slate-200 rounded-xl outline-none text-[#0c4a6e] bg-slate-50 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
             />
-            <div style={{ display: "flex", gap: "12px", marginTop: "28px" }}>
+            <div className="flex gap-3 mt-7">
               <button
                 onClick={() => { setShowModal(false); setNewProjectName(""); }}
-                style={{
-                  flex: 1, padding: "14px", fontSize: "15px", fontWeight: 600,
-                  color: "#64748b", background: "white", border: "1px solid #e2e8f0",
-                  borderRadius: "12px", cursor: "pointer", transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
+                className="flex-1 py-3 text-xs sm:text-sm font-semibold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateProject}
                 disabled={!newProjectName.trim() || creating}
-                style={{
-                  flex: 1, padding: "14px", fontSize: "15px", fontWeight: 700,
-                  color: "white",
-                  background: !newProjectName.trim() || creating ? "#cbd5e1" : "linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%)",
-                  border: "none", borderRadius: "12px",
-                  cursor: !newProjectName.trim() || creating ? "not-allowed" : "pointer",
-                  boxShadow: !newProjectName.trim() || creating ? "none" : "0 4px 14px rgba(14,165,233,0.3)",
-                  transition: "all 0.2s",
-                }}
+                className={`flex-1 py-3 text-xs sm:text-sm font-bold text-white rounded-xl transition-all ${
+                  !newProjectName.trim() || creating
+                    ? "bg-slate-300 cursor-not-allowed"
+                    : "bg-gradient-to-r from-sky-500 to-[#0c4a6e] shadow-md shadow-sky-500/30"
+                }`}
               >
                 {creating ? "Creating…" : "Create Project"}
               </button>
