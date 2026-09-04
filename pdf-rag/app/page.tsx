@@ -151,18 +151,18 @@ export default function Dashboard() {
       <main className="flex-1 px-4 sm:px-10 py-8 sm:py-16">
         <div className="max-w-[1100px] mx-auto">
           {/* Header Row */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
+          <div className="p-6 sm:p-8 bg-white/75 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/80 shadow-lg shadow-sky-900/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
             <div>
               <h2 className="text-2xl sm:text-4xl font-extrabold text-[#0c4a6e] m-0 tracking-tight">
                 Your Projects
               </h2>
-              <p className="text-sm sm:text-base text-slate-500 mt-1">
+              <p className="text-sm sm:text-base text-slate-500 mt-1.5 m-0">
                 Create a project, upload PDFs, and start chatting with your documents.
               </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-sky-500 to-[#0c4a6e] rounded-xl shadow-lg shadow-sky-500/25 hover:-translate-y-0.5 transition-transform"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-sky-500 to-[#0c4a6e] rounded-xl shadow-lg shadow-sky-500/25 hover:-translate-y-0.5 transition-transform shrink-0"
             >
               <span className="text-xl leading-none">+</span> New Project
             </button>

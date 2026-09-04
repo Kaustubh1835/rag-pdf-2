@@ -120,9 +120,10 @@ export default function ProjectSummarizePage({ params }: { params: Promise<{ id:
       </header>
 
       <main className="flex-1 px-4 sm:px-6 py-8 sm:py-16 flex flex-col items-center">
-        <div className="w-full max-w-[900px]">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0c4a6e] mb-2">Summarize Your Documents</h2>
-          <p className="text-slate-500 text-xs sm:text-sm mb-8">Choose a mode and get instant insights from your project's PDFs.</p>
+          <div className="p-6 sm:p-8 bg-white/75 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/80 shadow-lg shadow-sky-900/5 mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0c4a6e] m-0">Summarize Your Documents</h2>
+            <p className="text-slate-500 text-xs sm:text-sm mt-1.5 m-0">Choose a mode and get instant insights from your project's PDFs.</p>
+          </div>
 
           {/* Mode Selector */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
